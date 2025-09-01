@@ -1,4 +1,4 @@
-# Product Requirements Document: URLelf MVP
+# Product Requirements Document: url.computer MVP
 
 **Author:** Gemini
 **Status:** Draft
@@ -7,7 +7,7 @@
 
 ## 1. Introduction & Vision
 
-URLelf is a client-side web application designed to be an indispensable utility for developers, QA engineers, and students working with web technologies. Its core mission is to simplify the tedious tasks of parsing complex URLs and constructing cURL commands. By providing a clean, intuitive, and highly responsive interface, URLelf aims to deliver a "luxury developer experience"—giving technical users precisely what they need and getting out of their way.
+url.computer is a client-side web application designed to be an indispensable utility for developers, QA engineers, and students working with web technologies. Its core mission is to simplify the tedious tasks of parsing complex URLs and constructing cURL commands. By providing a clean, intuitive, and highly responsive interface, url.computer aims to deliver a "luxury developer experience"—giving technical users precisely what they need and getting out of their way.
 
 The entire application will operate on the frontend, ensuring user data privacy and delivering instantaneous performance. The state of the tool will be encoded directly into the shareable URL, allowing for seamless collaboration and debugging.
 
@@ -21,7 +21,7 @@ The entire application will operate on the frontend, ensuring user data privacy 
 ## 3. Target Audience & Personas
 
 *   **Primary:** Experienced Frontend & Backend Developers (e.g., the user of this PRD). They need to quickly debug API calls, extract auth tokens, or build test commands. They value speed, keyboard shortcuts, and a no-fuss interface.
-*   **Secondary:** Junior Developers & Students. They are learning about REST APIs, HTTP protocols, and URL structures. URLelf can serve as both a utility and an educational tool.
+*   **Secondary:** Junior Developers & Students. They are learning about REST APIs, HTTP protocols, and URL structures. url.computer can serve as both a utility and an educational tool.
 *   **Tertiary:** QA Engineers & Product Managers. They often need to test API endpoints or validate tracking links without diving deep into a terminal or Postman.
 
 ## 4. Core Features & Functional Requirements
@@ -62,7 +62,7 @@ The application state is encoded and stored in the browser's URL, enabling persi
 
 *   **FR-3.1: State Serialization:** The entire application state (URL input string, cURL method, headers, body, selected options) must be captured in a single JavaScript object.
 *   **FR-3.2: URL Compression:** On any state change, the state object will be serialized to JSON, then compressed using **LZ-String** to a Base64 string.
-*   **FR-3.3: Live URL Update:** The compressed state string will be appended to the current URL as a hash (e.g., https://urlelf.com/#s=[COMPRESSED_STRING]). This should update in near real-time without causing a page refresh.
+*   **FR-3.3: Live URL Update:** The compressed state string will be appended to the current URL as a hash (e.g., https://url.computer/#s=[COMPRESSED_STRING]). This should update in near real-time without causing a page refresh.
 *   **FR-3.4: State Hydration:** On page load, the application must check for the state string in the URL. If present, it must decompress, parse, and use the resulting object to populate the entire UI to its previous state.
 *   **FR-3.5: Share Button:** A dedicated "Copy Shareable Link" button must be available to easily copy the full URL with the state hash.
 
@@ -85,7 +85,7 @@ The application state is encoded and stored in the browser's URL, enabling persi
     5.  They click "Copy Command" and paste the complete cURL command into their terminal to test the endpoint.
 *   **Journey 4: Collaborative Debugging**
     1.  A developer from Journey 3 is getting a `400 Bad Request` error.
-    2.  They click the "Copy Shareable Link" button in URLelf.
+    2.  They click the "Copy Shareable Link" button in url.computer.
     3.  They send this link to a senior developer.
     4.  The senior dev opens the link and sees the exact same URL, `POST` method, headers, and body that the junior dev was using, allowing them to replicate and debug the issue instantly.
 

@@ -1,0 +1,12 @@
+@import "tailwindcss";
+
+@theme {
+    --color-elf-dark-blue: #023047;
+    --color-elf-mid-blue: #219ebc;
+    --color-elf-light-blue: #8ecae6;
+    --color-elf-yellow: #ffb703;
+    --color-elf-orange: #fb8500;
+
+    --font-sans: var(--font-roboto);
+    --font-mono: var(--font-jetbrains-mono);
+}
