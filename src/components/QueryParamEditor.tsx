@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import CopyButton from './CopyButton';
 import { searchParamsToObject, objectToSearchParams } from '../lib/url';
 
@@ -17,15 +17,32 @@ interface QueryParam {
 
 export default function QueryParamEditor({ searchParams, onSearchParamsChange }: QueryParamEditorProps) {
   const [params, setParams] = useState<QueryParam[]>([]);
+  const paramsRef = useRef<QueryParam[]>([]);
+  
+  // Keep ref in sync with state
+  useEffect(() => {
+    paramsRef.current = params;
+  }, [params]);
 
   // Convert URLSearchParams to local state on prop change
   useEffect(() => {
-    const paramEntries = Array.from(searchParams.entries()).map(([key, value], index) => ({
-      key,
-      value,
-      id: `${key}-${index}`, // Unique ID for React keys
-    }));
-    setParams(paramEntries);
+    const paramEntries = Array.from(searchParams.entries()).map(([key, value]) => {
+      // Try to find existing param with same key and value to preserve ID
+      const existingParam = paramsRef.current.find(p => p.key === key && p.value === value);
+      return existingParam || {
+        key,
+        value,
+        id: `param-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`, // Stable unique ID
+      };
+    });
+    
+    // Only update state if the params actually changed to avoid circular updates
+    const currentParamsSerialized = JSON.stringify(paramsRef.current);
+    const newParamsSerialized = JSON.stringify(paramEntries);
+    
+    if (currentParamsSerialized !== newParamsSerialized) {
+      setParams(paramEntries);
+    }
   }, [searchParams]);
 
   // Update parent component when local state changes
