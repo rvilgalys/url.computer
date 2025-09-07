@@ -11,41 +11,46 @@ The application will be a single-page application (SPA) built with Next.js and T
 We will use the `src` directory for our application code.
 
 ```
-/
-├── src/
-│   ├── app/
-│   │   └── page.tsx
-│   ├── components/
-│   │   ├── url-analyzer/
-│   │   │   ├── QueryParamEditor.tsx
-│   │   │   └── URLAnalyzer.tsx
-│   │   ├── curl-builder/
-│   │   │   ├── CurlCommand.tsx
-│   │   │   └── CurlBuilder.tsx
-│   │   └── ui/
-│   │       ├── Card.tsx
-│   │       ├── Input.tsx
-│   │       ├── CopyButton.tsx
-│   │       └── ...
-│   ├── hooks/
-│   │   └── useUrlState.ts
-│   ├── lib/
-│   │   ├── url.ts
-│   │   ├── curl.ts
-│   │   └── state.ts
-│   ├── styles/
-│   │   └── globals.css
-│   └── types/
-│       └── index.ts
-├── tests/
-│   ├── hooks/
-│   │   └── useUrlState.test.ts
-│   ├── lib/
-│   │   ├── url.test.ts
-│   │   └── curl.test.ts
-│   └── components/
-│       └── ...
-└── package.json
+/Users/rimantasvilgalys/dev/url.computer/
+├───Design.md
+├───PRD.md
+├───.git/...
+├───mocks/
+│   ├───dark.html
+│   └───light.html
+└───src/
+    ├───.gitignore
+    ├───eslint.config.mjs
+    ├───jest.config.js
+    ├───next-env.d.ts
+    ├───next.config.ts
+    ├───package-lock.json
+    ├───package.json
+    ├───postcss.config.mjs
+    ├───README.md
+    ├───tailwind.config.ts
+    ├───tsconfig.json
+    ├───.next/...
+    ├───.swc/...
+    ├───app/
+    │   ├───favicon.ico
+    │   ├───globals.css
+    │   ├───layout.tsx
+    │   └───page.tsx
+    ├───hooks/
+    │   └───useUrlState.ts
+    ├───node_modules/...
+    ├───public/
+    │   ├───file.svg
+    │   ├───globe.svg
+    │   ├───next.svg
+    │   ├───vercel.svg
+    │   └───window.svg
+    ├───tests/
+    │   └───hooks/
+    │       └───useUrlState.test.ts
+    └───types/
+        └───index.ts
 ```
 
 ## 2. State Management
@@ -80,13 +85,13 @@ We will create a custom hook, `useUrlState`, to manage the application state. Th
 
 ### 2.3. Testing the State Hook
 
-We can test the `useUrlState` hook using the `@testing-library/react-hooks` library. This will allow us to test the hook's logic in isolation.
+The `useUrlState` hook will be tested using the `renderHook` utility from `@testing-library/react`. This is the current standard for testing hooks in isolation, replacing the deprecated `@testing-library/react-hooks` package.
 
 **Testing (`tests/hooks/useUrlState.test.ts`):**
 
 *   Test that the hook initializes with the default state when there is no hash in the URL.
-*   Test that the hook correctly parses the state from the URL hash on initialization.
-*   Test that updating the state also updates the URL hash with the compressed state.
+*   Test that the hook correctly parses a compressed state from the URL hash on initialization.
+*   Test that updating the state via the hook's setter function correctly updates the `window.location.hash` with the new compressed state.
 
 ## 3. Component Breakdown
 
@@ -156,54 +161,56 @@ For the typeahead search of cURL options, we will eventually parse the cURL man 
 
 ## 5. Execution Plan
 
-### Phase 1: Project Setup
+### Phase 1: Project Setup [COMPLETED]
 
 1.  Initialize a new Next.js project: `npx create-next-app@latest --typescript --tailwind .`
 2.  Create the directory structure as outlined above.
 3.  Install dependencies:
     *   `npm install lz-string`
-    *   `npm install @types/lz-string @testing-library/react-hooks --save-dev`
-4.  Configure `tailwind.config.js` with the colors and fonts from the mocks:
+    *   `npm install @types/lz-string --save-dev`
+4.  Configure `tailwind.config.js` with the colors and fonts from the mocks.
 
-    ```javascript
-    // tailwind.config.js
-    /** @type {import('tailwindcss').Config} */
-    module.exports = {
-      content: [
-        './src/pages/**/*.{js,ts,jsx,tsx,mdx}',
-        './src/components/**/*.{js,ts,jsx,tsx,mdx}',
-        './src/app/**/*.{js,ts,jsx,tsx,mdx}',
-      ],
-      theme: {
-        extend: {
-          colors: {
-            'elf-dark-blue': '#023047',
-            'elf-mid-blue': '#219ebc',
-            'elf-light-blue': '#8ecae6',
-            'elf-yellow': '#ffb703',
-            'elf-orange': '#fb8500',
-          },
-          fontFamily: {
-            sans: ['Roboto', 'sans-serif'],
-            mono: ['"JetBrains Mono"', 'monospace'],
-          },
-        },
-      },
-      plugins: [],
-    };
-    ```
+### Phase 2: Core Types and State Management [COMPLETED]
 
-### Phase 2: Core Types and State Management
+This phase focuses on establishing the foundational state management for the application. We will now define the core data structures and create the custom hook responsible for synchronizing the application's state with the URL.
 
-1.  Define the `AppState` and `CurlRecipe` interfaces in `src/types/index.ts`.
-2.  Implement the `useUrlState` hook in `src/hooks/useUrlState.ts`.
-3.  Write tests for the `useUrlState` hook in `tests/hooks/useUrlState.test.ts`.
+1.  **Create `src/types/index.ts`**: Define and export the `AppState` and `CurlRecipe` interfaces. This provides a single source of truth for our application's data structures. [COMPLETED]
+2.  **Create `src/hooks/useUrlState.ts`**: Scaffold the `useUrlState` custom hook. [COMPLETED]
+3.  **Implement State Serialization/Deserialization**: [COMPLETED]
+    *   Within the hook, implement logic to read the `window.location.hash` on initial component mount.
+    *   Use a `try...catch` block to safely parse the hash. Use `lz-string` to decompress the value.
+    *   If parsing fails or no hash is present, initialize the hook with a default `AppState` object.
+4.  **Implement State Update Logic**: [COMPLETED]
+    *   Create a state setter function (e.g., `setAppState`) that will be returned by the hook.
+    *   When this function is called, it should update the internal state and then trigger a side effect (e.g., in a `useEffect` hook) to serialize the new state, compress it with `lz-string`, and update the `window.location.hash`.
+5.  **Write Tests in `tests/hooks/useUrlState.test.ts`**: [COMPLETED]
+    *   Use `renderHook` from `@testing-library/react` to test the hook in isolation.
+    *   **Test Case 1 (Initial State):** Verify the hook returns the default state when no URL hash is present.
+    *   **Test Case 2 (State Hydration):** Mock `window.location.hash` with a pre-compressed state string and verify the hook initializes with the correct, decompressed state.
+    *   **Test Case 3 (State Update):** Call the state setter function and use `act()` to wrap the update. Assert that `window.location.hash` is updated to the new, correctly compressed value.
 
-### Phase 3: URL Analyzer
+### Phase 3: URL Analyzer [COMPLETED]
 
-1.  Develop the URL parsing and building functions in `src/lib/url.ts` using TDD.
-2.  Create the `QueryParamEditor` and `URLAnalyzer` components.
-3.  Create the `CopyButton` component.
+**Strategy**: Use native JavaScript `URL` API instead of custom parsing library for robust URL handling.
+
+**Component Architecture:**
+1.  **Create URL utility functions in `src/lib/url.ts`**: Helper functions using native `URL` API for parsing, validation, and reconstruction. [COMPLETED]
+2.  **Build URL component editors**: Individual editors for each URL part (protocol, host, path, query params, fragment) with conditional rendering. [COMPLETED]
+3.  **Create `URLAnalyzer` container**: Main component orchestrating bidirectional sync between URL string state and component editors. [COMPLETED]
+4.  **Create `CopyButton` component**: Reusable component for copying text to clipboard. [COMPLETED]
+
+**Two-Way Editing Pattern:**
+- **Down**: URLAnalyzer parses URL string → passes components to child editors
+- **Up**: Child editors call `onComponentChange(newValue)` → URLAnalyzer reconstructs full URL → updates state
+
+**Error Handling**: Use `URL.canParse()` for validation with graceful degradation for invalid URLs.
+
+**Implementation Notes:**
+- Created comprehensive URL utilities with 24 passing tests
+- Built reusable CopyButton with success states
+- QueryParamEditor supports dynamic add/remove with real-time sync
+- URLAnalyzer includes input validation and error states
+- All components tested with 36 total passing tests
 
 ### Phase 4: cURL Builder
 

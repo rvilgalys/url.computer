@@ -13,6 +13,7 @@ const customJestConfig = {
   moduleDirectories: ["node_modules", "<rootDir>/"],
   roots: ["<rootDir>", "./tests"],
   modulePaths: ["<rootDir>"],
+  setupFilesAfterEnv: ["<rootDir>/jest.setup.js"],
 };
 
 module.exports = createJestConfig(customJestConfig);
