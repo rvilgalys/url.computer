@@ -227,6 +227,36 @@ export function validatePathname(pathname: string): { isValid: boolean; error?: 
 }
 
 /**
+ * Validate protocol format for URL compatibility
+ */
+export function validateProtocol(protocol: string): { isValid: boolean; error?: string } {
+  if (!protocol) {
+    return { isValid: false, error: 'Protocol cannot be empty' };
+  }
+
+  // Protocol must end with ':'
+  if (!protocol.endsWith(':')) {
+    return { isValid: false, error: 'Protocol must end with :' };
+  }
+
+  // Get the scheme part (without the ':')
+  const scheme = protocol.slice(0, -1);
+
+  // Check for valid characters (RFC 3986: scheme = ALPHA *( ALPHA / DIGIT / "+" / "-" / "." ))
+  if (!/^[a-zA-Z][a-zA-Z0-9+.-]*$/.test(scheme)) {
+    return { isValid: false, error: 'Invalid protocol format' };
+  }
+
+  // Test if it would create a valid URL
+  try {
+    new URL(`${protocol}//example.com`);
+    return { isValid: true };
+  } catch {
+    return { isValid: false, error: 'Unsupported protocol' };
+  }
+}
+
+/**
  * Safely update URL component with validation
  */
 export function updateUrlComponentSafe(
@@ -244,6 +274,17 @@ export function updateUrlComponentSafe(
   
   // Validate component-specific values before updating
   switch (component) {
+    case 'protocol':
+      const protocolValidation = validateProtocol(value as string);
+      if (!protocolValidation.isValid) {
+        return { 
+          url: urlString, 
+          success: false, 
+          error: protocolValidation.error 
+        };
+      }
+      updated.protocol = value as string;
+      break;
     case 'hostname':
       const hostnameValidation = validateHostname(value as string);
       if (!hostnameValidation.isValid) {
@@ -265,9 +306,6 @@ export function updateUrlComponentSafe(
         };
       }
       updated.pathname = value as string;
-      break;
-    case 'protocol':
-      updated.protocol = value as string;
       break;
     case 'searchParams':
       updated.searchParams = value as URLSearchParams;

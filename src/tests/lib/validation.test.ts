@@ -1,4 +1,4 @@
-import { validateHostname, validatePathname, updateUrlComponentSafe } from '../../lib/url';
+import { validateHostname, validatePathname, validateProtocol, updateUrlComponentSafe } from '../../lib/url';
 
 describe('Hostname Validation', () => {
   it('should validate correct hostnames', () => {
@@ -82,8 +82,78 @@ describe('Pathname Validation', () => {
   });
 });
 
+describe('Protocol Validation', () => {
+  it('should validate correct protocols', () => {
+    expect(validateProtocol('https:')).toEqual({ isValid: true });
+    expect(validateProtocol('http:')).toEqual({ isValid: true });
+    expect(validateProtocol('ftp:')).toEqual({ isValid: true });
+    expect(validateProtocol('custom:')).toEqual({ isValid: true });
+    expect(validateProtocol('my-protocol:')).toEqual({ isValid: true });
+    expect(validateProtocol('test+protocol:')).toEqual({ isValid: true });
+    expect(validateProtocol('protocol.v2:')).toEqual({ isValid: true });
+  });
+
+  it('should reject empty protocols', () => {
+    expect(validateProtocol('')).toEqual({
+      isValid: false,
+      error: 'Protocol cannot be empty'
+    });
+  });
+
+  it('should reject protocols without colon', () => {
+    expect(validateProtocol('https')).toEqual({
+      isValid: false,
+      error: 'Protocol must end with :'
+    });
+    expect(validateProtocol('ftp')).toEqual({
+      isValid: false,
+      error: 'Protocol must end with :'
+    });
+  });
+
+  it('should reject protocols with invalid characters', () => {
+    expect(validateProtocol('ht@tps:')).toEqual({
+      isValid: false,
+      error: 'Invalid protocol format'
+    });
+    expect(validateProtocol('proto col:')).toEqual({
+      isValid: false,
+      error: 'Invalid protocol format'
+    });
+    expect(validateProtocol('123protocol:')).toEqual({
+      isValid: false,
+      error: 'Invalid protocol format'
+    });
+  });
+
+  it('should reject protocols that do not start with a letter', () => {
+    expect(validateProtocol('-protocol:')).toEqual({
+      isValid: false,
+      error: 'Invalid protocol format'
+    });
+    expect(validateProtocol('9protocol:')).toEqual({
+      isValid: false,
+      error: 'Invalid protocol format'
+    });
+  });
+});
+
 describe('Safe URL Component Update', () => {
   const testUrl = 'https://api.example.com/v1/users?page=1#section';
+
+  it('should successfully update protocol with valid value', () => {
+    const result = updateUrlComponentSafe(testUrl, 'protocol', 'ftp:');
+    expect(result.success).toBe(true);
+    expect(result.url).toBe('ftp://api.example.com/v1/users?page=1#section');
+    expect(result.error).toBeUndefined();
+  });
+
+  it('should fail to update protocol with invalid value', () => {
+    const result = updateUrlComponentSafe(testUrl, 'protocol', 'invalid-protocol');
+    expect(result.success).toBe(false);
+    expect(result.url).toBe(testUrl); // Original URL unchanged
+    expect(result.error).toBe('Protocol must end with :');
+  });
 
   it('should successfully update hostname with valid value', () => {
     const result = updateUrlComponentSafe(testUrl, 'hostname', 'newapi.example.com');

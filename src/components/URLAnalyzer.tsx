@@ -38,6 +38,14 @@ export default function URLAnalyzer({ url, onUrlChange }: URLAnalyzerProps) {
     // This allows users to type without breaking the URL parsing
   };
 
+  // Handle protocol changes
+  const handleProtocolChange = (newProtocol: string) => {
+    const result = updateUrlComponentSafe(url, 'protocol', newProtocol);
+    if (result.success && result.url !== url) {
+      onUrlChange(result.url);
+    }
+  };
+
   // Handle hostname changes
   const handleHostnameChange = (newHostname: string) => {
     const result = updateUrlComponentSafe(url, 'hostname', newHostname);
@@ -115,7 +123,8 @@ export default function URLAnalyzer({ url, onUrlChange }: URLAnalyzerProps) {
           <div className="col-span-1 space-y-3">
             <ProtocolEditor
               protocol={parsedUrl.protocol}
-              isEditable={false}
+              onProtocolChange={handleProtocolChange}
+              isEditable={true}
             />
             <HostnameEditor
               hostname={parsedUrl.hostname}
