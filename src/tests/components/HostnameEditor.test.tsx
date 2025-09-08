@@ -158,6 +158,83 @@ describe('HostnameEditor', () => {
     expect(screen.getByText('🏠 Local development')).toBeInTheDocument();
   });
 
+  it('should handle hostname with port correctly', () => {
+    render(
+      <HostnameEditor 
+        hostname="localhost:3000" 
+        onHostnameChange={mockOnHostnameChange}
+        isEditable={true}
+      />
+    );
+
+    const input = screen.getByRole('textbox');
+    expect(input).toHaveValue('localhost:3000');
+    
+    // Should not show validation error for valid hostname:port
+    expect(screen.queryByText(/error/i)).not.toBeInTheDocument();
+  });
+
+  it('should call onHostnameChange with valid hostname:port', () => {
+    render(
+      <HostnameEditor 
+        hostname="example.com" 
+        onHostnameChange={mockOnHostnameChange}
+        isEditable={true}
+      />
+    );
+
+    const input = screen.getByRole('textbox');
+    fireEvent.change(input, { target: { value: 'localhost:3000' } });
+
+    expect(mockOnHostnameChange).toHaveBeenCalledWith('localhost:3000');
+  });
+
+  it('should show error for invalid port numbers', async () => {
+    render(
+      <HostnameEditor 
+        hostname="localhost" 
+        onHostnameChange={mockOnHostnameChange}
+        isEditable={true}
+      />
+    );
+
+    const input = screen.getByRole('textbox');
+    fireEvent.change(input, { target: { value: 'localhost:99999' } });
+
+    await waitFor(() => {
+      expect(screen.getByText('Port must be a number between 1 and 65535')).toBeInTheDocument();
+    });
+    
+    expect(mockOnHostnameChange).not.toHaveBeenCalledWith('localhost:99999');
+  });
+
+  it('should handle partial IP address typing without interruption', () => {
+    render(
+      <HostnameEditor 
+        hostname="" 
+        onHostnameChange={mockOnHostnameChange}
+        isEditable={true}
+      />
+    );
+
+    const input = screen.getByRole('textbox');
+    
+    // Type partial IP addresses - these should not call onHostnameChange immediately
+    fireEvent.change(input, { target: { value: '192' } });
+    expect(input).toHaveValue('192');
+    
+    fireEvent.change(input, { target: { value: '192.168' } });
+    expect(input).toHaveValue('192.168');
+    
+    fireEvent.change(input, { target: { value: '192.168.1' } });
+    expect(input).toHaveValue('192.168.1');
+    
+    // Complete IP should work normally
+    fireEvent.change(input, { target: { value: '192.168.1.1' } });
+    expect(input).toHaveValue('192.168.1.1');
+    expect(mockOnHostnameChange).toHaveBeenCalledWith('192.168.1.1');
+  });
+
   it('should handle empty hostname gracefully', () => {
     render(
       <HostnameEditor 

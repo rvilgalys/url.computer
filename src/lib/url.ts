@@ -166,32 +166,53 @@ export function objectToSearchParams(obj: Record<string, string>): URLSearchPara
 }
 
 /**
- * Validate hostname format for URL compatibility
+ * Validate hostname format for URL compatibility, supporting hostname:port format
  */
 export function validateHostname(hostname: string): { isValid: boolean; error?: string } {
   if (!hostname) {
     return { isValid: false, error: 'Hostname cannot be empty' };
   }
 
-  // Check for consecutive dots
-  if (hostname.includes('..')) {
+  // Parse hostname and port if present
+  const colonIndex = hostname.lastIndexOf(':');
+  let actualHostname = hostname;
+  let port = '';
+  
+  if (colonIndex > 0) {
+    actualHostname = hostname.substring(0, colonIndex);
+    port = hostname.substring(colonIndex + 1);
+  }
+
+  // Validate port if colon is present
+  if (colonIndex > 0) {
+    if (port === '') {
+      return { isValid: false, error: 'Port must be a number between 1 and 65535' };
+    }
+    const portNum = parseInt(port, 10);
+    if (isNaN(portNum) || portNum < 1 || portNum > 65535 || port !== portNum.toString()) {
+      return { isValid: false, error: 'Port must be a number between 1 and 65535' };
+    }
+  }
+
+  // Check for consecutive dots in hostname
+  if (actualHostname.includes('..')) {
     return { isValid: false, error: 'Domain cannot contain consecutive dots' };
   }
 
-  // Check for invalid characters
-  if (!/^[a-zA-Z0-9.-]+$/.test(hostname)) {
+  // Check for invalid characters in hostname (now including colons only at the end for port)
+  if (!/^[a-zA-Z0-9.-]+$/.test(actualHostname)) {
     return { isValid: false, error: 'Invalid characters in domain' };
   }
 
   // Check for valid domain pattern (basic validation)
-  const parts = hostname.split('.');
+  const parts = actualHostname.split('.');
   if (parts.some(part => part.length === 0 || part.startsWith('-') || part.endsWith('-'))) {
     return { isValid: false, error: 'Invalid domain format' };
   }
 
-  // Test if it would create a valid URL
+  // Test if it would create a valid URL (test hostname without port for URL constructor)
   try {
-    new URL(`https://${hostname}`);
+    new URL(`https://${actualHostname}`);
     return { isValid: true };
   } catch {
     return { isValid: false, error: 'Invalid domain format' };

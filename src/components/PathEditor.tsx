@@ -17,12 +17,18 @@ export default function PathEditor({
 }: PathEditorProps) {
   const [localPathname, setLocalPathname] = useState(pathname);
   const [validationState, setValidationState] = useState<{ isValid: boolean; error?: string }>({ isValid: true });
+  const [isHydrated, setIsHydrated] = useState(false);
 
   // Update local state when prop changes
   useEffect(() => {
     setLocalPathname(pathname);
     setValidationState({ isValid: true });
   }, [pathname]);
+
+  // Set hydrated flag after component mounts
+  useEffect(() => {
+    setIsHydrated(true);
+  }, []);
 
   // Handle pathname changes with validation
   const handlePathnameChange = (newPathname: string) => {
@@ -80,7 +86,7 @@ export default function PathEditor({
               <span className="text-elf-light-blue">/</span>
             )}
           </div>
-          {pathname && pathname !== '/' && (
+          {pathname && pathname !== '/' && isHydrated && (
             <CopyButton 
               textToCopy={pathname} 
               size="sm" 
@@ -90,7 +96,7 @@ export default function PathEditor({
         </div>
         
         {/* Path type indicators */}
-        {pathname && pathname !== '/' && (
+        {pathname && pathname !== '/' && isHydrated && (
           <div className="text-xs text-elf-light-blue/60 mt-1">
             {isAPIPath && '🔌 API endpoint'}
             {hasFileExtension && !isAPIPath && '📄 Static file'}
@@ -122,7 +128,7 @@ export default function PathEditor({
             `}
             placeholder="/path/to/resource"
           />
-          {localPathname && localPathname !== '/' && validationState.isValid && (
+          {localPathname && localPathname !== '/' && validationState.isValid && isHydrated && (
             <CopyButton 
               textToCopy={localPathname} 
               size="sm" 
@@ -143,7 +149,7 @@ export default function PathEditor({
       </div>
       
       {/* Breadcrumb display for complex paths */}
-      {segments.length > 1 && validationState.isValid && (
+      {segments.length > 1 && validationState.isValid && isHydrated && (
         <div className="text-xs text-elf-light-blue/40 mt-1 flex items-center gap-1">
           <span>📍</span>
           {segments.map((segment, index) => (
@@ -156,7 +162,7 @@ export default function PathEditor({
       )}
       
       {/* Path type indicators */}
-      {localPathname && localPathname !== '/' && validationState.isValid && (
+      {localPathname && localPathname !== '/' && validationState.isValid && isHydrated && (
         <div className="text-xs text-elf-light-blue/60 mt-1">
           {isAPIPath && '🔌 API endpoint'}
           {hasFileExtension && !isAPIPath && '📄 Static file'}

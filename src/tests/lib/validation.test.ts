@@ -9,6 +9,15 @@ describe('Hostname Validation', () => {
     expect(validateHostname('sub.domain.example.com')).toEqual({ isValid: true });
   });
 
+  it('should validate hostname:port combinations', () => {
+    expect(validateHostname('localhost:3000')).toEqual({ isValid: true });
+    expect(validateHostname('example.com:8080')).toEqual({ isValid: true });
+    expect(validateHostname('api.example.com:443')).toEqual({ isValid: true });
+    expect(validateHostname('192.168.1.1:3000')).toEqual({ isValid: true });
+    expect(validateHostname('127.0.0.1:8080')).toEqual({ isValid: true });
+    expect(validateHostname('sub.domain.example.com:9090')).toEqual({ isValid: true });
+  });
+
   it('should reject empty hostnames', () => {
     expect(validateHostname('')).toEqual({
       isValid: false,
@@ -42,6 +51,29 @@ describe('Hostname Validation', () => {
     expect(validateHostname('example.com-')).toEqual({
       isValid: false,
       error: 'Invalid domain format'
+    });
+  });
+
+  it('should reject invalid port numbers', () => {
+    expect(validateHostname('localhost:0')).toEqual({
+      isValid: false,
+      error: 'Port must be a number between 1 and 65535'
+    });
+    expect(validateHostname('localhost:65536')).toEqual({
+      isValid: false,
+      error: 'Port must be a number between 1 and 65535'
+    });
+    expect(validateHostname('localhost:abc')).toEqual({
+      isValid: false,
+      error: 'Port must be a number between 1 and 65535'
+    });
+    expect(validateHostname('localhost:3000abc')).toEqual({
+      isValid: false,
+      error: 'Port must be a number between 1 and 65535'
+    });
+    expect(validateHostname('localhost:')).toEqual({
+      isValid: false,
+      error: 'Port must be a number between 1 and 65535'
     });
   });
 });
@@ -159,6 +191,13 @@ describe('Safe URL Component Update', () => {
     const result = updateUrlComponentSafe(testUrl, 'hostname', 'newapi.example.com');
     expect(result.success).toBe(true);
     expect(result.url).toBe('https://newapi.example.com/v1/users?page=1#section');
+    expect(result.error).toBeUndefined();
+  });
+
+  it('should successfully update hostname with port', () => {
+    const result = updateUrlComponentSafe(testUrl, 'hostname', 'localhost:3000');
+    expect(result.success).toBe(true);
+    expect(result.url).toBe('https://localhost:3000/v1/users?page=1#section');
     expect(result.error).toBeUndefined();
   });
 

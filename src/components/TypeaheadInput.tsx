@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useCombobox } from "downshift";
 
 export interface TypeaheadInputProps {
@@ -25,6 +25,12 @@ export default function TypeaheadInput({
   maxSuggestions = 10,
 }: TypeaheadInputProps) {
   const [inputValue, setInputValue] = useState(value);
+  const [isHydrated, setIsHydrated] = useState(false);
+
+  // Set hydrated flag after component mounts
+  useEffect(() => {
+    setIsHydrated(true);
+  }, []);
 
   // Default filter function - starts with matching, case insensitive
   const defaultFilter = (suggestions: string[], inputValue: string) => {
@@ -92,10 +98,10 @@ export default function TypeaheadInput({
       <div
         {...getMenuProps()}
         className={`absolute z-10 w-full mt-1 bg-elf-dark-blue border border-elf-mid-blue/30 rounded-md shadow-lg max-h-60 overflow-auto ${
-          isOpen && filteredSuggestions.length > 0 ? 'block' : 'hidden'
+          isHydrated && isOpen && filteredSuggestions.length > 0 ? 'block' : 'hidden'
         }`}
       >
-        {filteredSuggestions.map((item, index) => (
+        {isHydrated && filteredSuggestions.map((item, index) => (
           <div
             key={`${item}-${index}`}
             {...getItemProps({ item, index })}

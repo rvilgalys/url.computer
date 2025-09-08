@@ -17,6 +17,7 @@ export default function HostnameEditor({
 }: HostnameEditorProps) {
   const [localHostname, setLocalHostname] = useState(hostname);
   const [validationState, setValidationState] = useState<{ isValid: boolean; error?: string }>({ isValid: true });
+  const [isHydrated, setIsHydrated] = useState(false);
 
   // Update local state when prop changes
   useEffect(() => {
@@ -24,44 +25,63 @@ export default function HostnameEditor({
     setValidationState({ isValid: true });
   }, [hostname]);
 
+  // Set hydrated flag after component mounts
+  useEffect(() => {
+    setIsHydrated(true);
+  }, []);
+
+
   // Handle hostname changes with validation
   const handleHostnameChange = (newHostname: string) => {
     setLocalHostname(newHostname);
     
     if (!newHostname) {
       setValidationState({ isValid: true });
+      if (onHostnameChange) {
+        onHostnameChange(newHostname);
+      }
       return;
     }
 
     const validation = validateHostname(newHostname);
     setValidationState(validation);
 
-    // Only propagate valid hostnames to parent
+    // Only call parent callback if hostname is valid
     if (validation.isValid && onHostnameChange) {
       onHostnameChange(newHostname);
     }
   };
 
+  // Parse hostname without port for consistent type detection
+  const getActualHostname = (hostWithPort: string) => {
+    if (!hostWithPort) return '';
+    const colonIndex = hostWithPort.lastIndexOf(':');
+    return colonIndex > 0 ? hostWithPort.substring(0, colonIndex) : hostWithPort;
+  };
+
   // Extract subdomain and domain for visual highlighting
   const getHostnameParts = (host: string) => {
-    if (!host) return { subdomain: '', domain: '' };
+    if (!host) return { subdomain: '', domain: '', actualHostname: '' };
     
-    const parts = host.split('.');
+    const actualHost = getActualHostname(host);
+    const parts = actualHost.split('.');
     if (parts.length <= 2) {
-      return { subdomain: '', domain: host };
+      return { subdomain: '', domain: actualHost, actualHostname: actualHost };
     }
     
     // Assume last two parts are domain (e.g., example.com)
     const domain = parts.slice(-2).join('.');
     const subdomain = parts.slice(0, -2).join('.');
     
-    return { subdomain, domain };
+    return { subdomain, domain, actualHostname: actualHost };
   };
 
-  const { subdomain, domain } = getHostnameParts(hostname);
+  // Always use the hostname prop for consistency between server and client
+  // The localHostname is only for the input field value
+  const { subdomain, domain, actualHostname } = getHostnameParts(hostname);
   
-  const isLocalhost = hostname === 'localhost' || hostname.startsWith('127.') || hostname.startsWith('192.168.') || hostname.startsWith('10.');
-  const isIP = /^\d+\.\d+\.\d+\.\d+$/.test(hostname);
+  const isLocalhost = actualHostname === 'localhost' || actualHostname.startsWith('127.') || actualHostname.startsWith('192.168.') || actualHostname.startsWith('10.');
+  const isIP = /^\d+\.\d+\.\d+\.\d+$/.test(actualHostname);
 
   if (!isEditable || !onHostnameChange) {
     return (
@@ -92,7 +112,7 @@ export default function HostnameEditor({
         </div>
         
         {/* Host type indicator */}
-        {hostname && (
+        {hostname && isHydrated && (
           <div className="text-xs text-elf-light-blue/60 mt-1">
             {isLocalhost && '🏠 Local development'}
             {isIP && !isLocalhost && '🌐 IP address'}
@@ -145,7 +165,7 @@ export default function HostnameEditor({
       </div>
       
       {/* Host type indicator */}
-      {localHostname && validationState.isValid && (
+      {localHostname && validationState.isValid && isHydrated && (
         <div className="text-xs text-elf-light-blue/60 mt-1">
           {isLocalhost && '🏠 Local development'}
           {isIP && !isLocalhost && '🌐 IP address'}
