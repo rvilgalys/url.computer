@@ -164,3 +164,127 @@ export function objectToSearchParams(obj: Record<string, string>): URLSearchPara
   }
   return params;
 }
+
+/**
+ * Validate hostname format for URL compatibility
+ */
+export function validateHostname(hostname: string): { isValid: boolean; error?: string } {
+  if (!hostname) {
+    return { isValid: false, error: 'Hostname cannot be empty' };
+  }
+
+  // Check for consecutive dots
+  if (hostname.includes('..')) {
+    return { isValid: false, error: 'Domain cannot contain consecutive dots' };
+  }
+
+  // Check for invalid characters
+  if (!/^[a-zA-Z0-9.-]+$/.test(hostname)) {
+    return { isValid: false, error: 'Invalid characters in domain' };
+  }
+
+  // Check for valid domain pattern (basic validation)
+  const parts = hostname.split('.');
+  if (parts.some(part => part.length === 0 || part.startsWith('-') || part.endsWith('-'))) {
+    return { isValid: false, error: 'Invalid domain format' };
+  }
+
+  // Test if it would create a valid URL
+  try {
+    new URL(`https://${hostname}`);
+    return { isValid: true };
+  } catch {
+    return { isValid: false, error: 'Invalid domain format' };
+  }
+}
+
+/**
+ * Validate pathname format for URL compatibility
+ */
+export function validatePathname(pathname: string): { isValid: boolean; error?: string } {
+  if (!pathname) {
+    return { isValid: true }; // Empty path is valid (becomes "/")
+  }
+
+  // Path must start with / if not empty
+  if (!pathname.startsWith('/')) {
+    return { isValid: false, error: 'Path must start with /' };
+  }
+
+  // Check for invalid characters that would break URL parsing
+  // Allow most characters but exclude some problematic ones
+  if (/[<>"{}|\\^`]/.test(pathname)) {
+    return { isValid: false, error: 'Path contains invalid characters' };
+  }
+
+  // Test if it would create a valid URL with a dummy hostname
+  try {
+    new URL(`https://example.com${pathname}`);
+    return { isValid: true };
+  } catch {
+    return { isValid: false, error: 'Invalid path format' };
+  }
+}
+
+/**
+ * Safely update URL component with validation
+ */
+export function updateUrlComponentSafe(
+  urlString: string,
+  component: keyof ParsedUrl,
+  value: string | URLSearchParams
+): { url: string; success: boolean; error?: string } {
+  const parsed = parseUrl(urlString);
+  
+  if (!parsed.isValid) {
+    return { url: urlString, success: false, error: 'Original URL is invalid' };
+  }
+  
+  const updated = { ...parsed };
+  
+  // Validate component-specific values before updating
+  switch (component) {
+    case 'hostname':
+      const hostnameValidation = validateHostname(value as string);
+      if (!hostnameValidation.isValid) {
+        return { 
+          url: urlString, 
+          success: false, 
+          error: hostnameValidation.error 
+        };
+      }
+      updated.hostname = value as string;
+      break;
+    case 'pathname':
+      const pathnameValidation = validatePathname(value as string);
+      if (!pathnameValidation.isValid) {
+        return { 
+          url: urlString, 
+          success: false, 
+          error: pathnameValidation.error 
+        };
+      }
+      updated.pathname = value as string;
+      break;
+    case 'protocol':
+      updated.protocol = value as string;
+      break;
+    case 'searchParams':
+      updated.searchParams = value as URLSearchParams;
+      break;
+    case 'hash':
+      updated.hash = value as string;
+      break;
+  }
+  
+  const newUrl = buildUrl(updated);
+  if (!newUrl) {
+    return { 
+      url: urlString, 
+      success: false, 
+      error: 'Failed to build valid URL' 
+    };
+  }
+  
+  return { url: newUrl, success: true };
+}

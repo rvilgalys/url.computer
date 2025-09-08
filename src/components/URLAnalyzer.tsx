@@ -1,12 +1,13 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { parseUrl, isValidUrl, updateUrlComponent } from '../lib/url';
+import { parseUrl, isValidUrl, updateUrlComponent, updateUrlComponentSafe } from '../lib/url';
 import ProtocolEditor from './ProtocolEditor';
 import HostnameEditor from './HostnameEditor';
 import PathEditor from './PathEditor';
 import FragmentEditor from './FragmentEditor';
 import QueryParamEditor from './QueryParamEditor';
+import CopyButton from './CopyButton';
 
 interface URLAnalyzerProps {
   url: string;
@@ -37,6 +38,22 @@ export default function URLAnalyzer({ url, onUrlChange }: URLAnalyzerProps) {
     // This allows users to type without breaking the URL parsing
   };
 
+  // Handle hostname changes
+  const handleHostnameChange = (newHostname: string) => {
+    const result = updateUrlComponentSafe(url, 'hostname', newHostname);
+    if (result.success && result.url !== url) {
+      onUrlChange(result.url);
+    }
+  };
+
+  // Handle pathname changes
+  const handlePathnameChange = (newPathname: string) => {
+    const result = updateUrlComponentSafe(url, 'pathname', newPathname);
+    if (result.success && result.url !== url) {
+      onUrlChange(result.url);
+    }
+  };
+
   // Handle query parameter changes
   const handleSearchParamsChange = (newSearchParams: URLSearchParams) => {
     const updatedUrl = updateUrlComponent(url, 'searchParams', newSearchParams);
@@ -58,20 +75,30 @@ export default function URLAnalyzer({ url, onUrlChange }: URLAnalyzerProps) {
       </label>
       
       <div className="relative">
-        <input
-          type="text"
-          id="url-input"
-          value={urlInput}
-          onChange={(e) => handleUrlInputChange(e.target.value)}
-          className={`
-            font-mono w-full p-3 rounded-md text-lg border
-            ${isValid 
-              ? 'border-elf-mid-blue/30 bg-elf-dark-blue text-elf-light-blue focus:outline-none focus:ring-2 focus:ring-elf-yellow focus:border-transparent' 
-              : 'border-elf-orange/50 bg-elf-orange/10 text-elf-orange focus:outline-none focus:ring-2 focus:ring-elf-orange focus:border-transparent'
-            }
-          `}
-          placeholder="https://api.example.com/v1/users?token=..."
-        />
+        <div className="flex gap-2">
+          <input
+            type="text"
+            id="url-input"
+            value={urlInput}
+            onChange={(e) => handleUrlInputChange(e.target.value)}
+            className={`
+              font-mono flex-1 p-3 rounded-md text-lg border
+              ${isValid 
+                ? 'border-elf-mid-blue/30 bg-elf-dark-blue text-elf-light-blue focus:outline-none focus:ring-2 focus:ring-elf-yellow focus:border-transparent' 
+                : 'border-elf-orange/50 bg-elf-orange/10 text-elf-orange focus:outline-none focus:ring-2 focus:ring-elf-orange focus:border-transparent'
+              }
+            `}
+            placeholder="https://api.example.com/v1/users?token=..."
+          />
+          {isValid && urlInput && (
+            <CopyButton 
+              textToCopy={urlInput} 
+              size="sm" 
+              title="Copy URL"
+              className="px-3 text-elf-light-blue/60 hover:text-elf-light-blue hover:bg-elf-mid-blue/20 border border-elf-mid-blue/30 rounded-md"
+            />
+          )}
+        </div>
         {!isValid && urlInput && (
           <div className="absolute top-full left-0 mt-1 text-sm text-elf-orange flex items-center gap-1">
             <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
@@ -92,11 +119,13 @@ export default function URLAnalyzer({ url, onUrlChange }: URLAnalyzerProps) {
             />
             <HostnameEditor
               hostname={parsedUrl.hostname}
-              isEditable={false}
+              onHostnameChange={handleHostnameChange}
+              isEditable={true}
             />
             <PathEditor
               pathname={parsedUrl.pathname}
-              isEditable={false}
+              onPathnameChange={handlePathnameChange}
+              isEditable={true}
             />
             <FragmentEditor
               hash={parsedUrl.hash}

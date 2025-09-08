@@ -1,12 +1,20 @@
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import URLAnalyzer from '../../components/URLAnalyzer';
 
+// Mock clipboard API
+Object.assign(navigator, {
+  clipboard: {
+    writeText: jest.fn().mockImplementation(() => Promise.resolve()),
+  },
+});
+
 // Mock the useUrlState hook since we're testing the component in isolation
 const mockOnUrlChange = jest.fn();
 
 describe('URLAnalyzer', () => {
   beforeEach(() => {
     mockOnUrlChange.mockClear();
+    (navigator.clipboard.writeText as jest.Mock).mockClear();
   });
 
   it('should render URL input and parse valid URL', () => {
@@ -25,12 +33,10 @@ describe('URLAnalyzer', () => {
     expect(screen.getByText('Fragment')).toBeInTheDocument();
     expect(screen.getByText('Query Parameters')).toBeInTheDocument();
     
-    // Check parsed values - using more flexible matching for complex layouts
-    expect(screen.getByText('https:')).toBeInTheDocument();
-    expect(screen.getByText(/api\./, { selector: 'span' })).toBeInTheDocument(); // subdomain with dot
-    expect(screen.getByText('example.com')).toBeInTheDocument(); // domain
-    expect(screen.getByText('v1')).toBeInTheDocument(); // path segment  
-    expect(screen.getByText('users')).toBeInTheDocument(); // path segment
+    // Check parsed values - now that hostname and path are editable, they appear in input fields
+    expect(screen.getByText('https:')).toBeInTheDocument(); // protocol
+    expect(screen.getByDisplayValue('api.example.com')).toBeInTheDocument(); // hostname in input
+    expect(screen.getByDisplayValue('/v1/users')).toBeInTheDocument(); // path in input  
     expect(screen.getByText('#')).toBeInTheDocument(); // fragment hash
     expect(screen.getByText('profile')).toBeInTheDocument(); // fragment value
   });
@@ -91,5 +97,42 @@ describe('URLAnalyzer', () => {
     // Should show "No query parameters" state
     expect(screen.getByText('No query parameters')).toBeInTheDocument();
     expect(screen.getByText('+ Add Parameter')).toBeInTheDocument();
+  });
+
+  it('should show copy button for valid URLs and copy the URL when clicked', async () => {
+    const testUrl = 'https://api.example.com/v1/users?page=1';
+    
+    render(<URLAnalyzer url={testUrl} onUrlChange={mockOnUrlChange} />);
+    
+    // Copy button should be visible for valid URL
+    const copyButton = screen.getByTitle('Copy URL');
+    expect(copyButton).toBeInTheDocument();
+    
+    // Click the copy button
+    fireEvent.click(copyButton);
+    
+    // Verify clipboard was called with the URL
+    await waitFor(() => {
+      expect(navigator.clipboard.writeText).toHaveBeenCalledWith(testUrl);
+    });
+  });
+
+  it('should not show copy button for invalid URLs', () => {
+    render(<URLAnalyzer url="" onUrlChange={mockOnUrlChange} />);
+    
+    const urlInput = screen.getByPlaceholderText(/https:\/\/api.example.com/);
+    
+    // Type invalid URL
+    fireEvent.change(urlInput, { target: { value: 'not-a-valid-url' } });
+    
+    // Copy button should not be visible for invalid URL
+    expect(screen.queryByTitle('Copy URL')).not.toBeInTheDocument();
+  });
+
+  it('should not show copy button when URL input is empty', () => {
+    render(<URLAnalyzer url="" onUrlChange={mockOnUrlChange} />);
+    
+    // Copy button should not be visible when no URL
+    expect(screen.queryByTitle('Copy URL')).not.toBeInTheDocument();
   });
 });
