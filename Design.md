@@ -205,12 +205,46 @@ This phase focuses on establishing the foundational state management for the app
 
 **Error Handling**: Use `URL.canParse()` for validation with graceful degradation for invalid URLs.
 
+**Components Built:**
+- `ProtocolEditor` - Dropdown with full cURL protocol suite (28 protocols) plus custom input
+- `HostnameEditor` - Input with validation for domain names and IP addresses
+- `PathEditor` - Input with pathname validation and auto-formatting
+- `QueryParamEditor` - Dynamic key-value editor with add/remove functionality
+- `FragmentEditor` - Input for URL hash/fragment editing
+- `URLAnalyzer` - Container orchestrating all editors with two-way sync
+- `CopyButton` - Reusable clipboard copy component with success feedback
+
 **Implementation Notes:**
-- Created comprehensive URL utilities with 24 passing tests
-- Built reusable CopyButton with success states
+- Created comprehensive URL utilities with validation functions
+- Built Protocol validation following RFC 3986 specifications
+- Full cURL protocol support with context hints for each protocol category
 - QueryParamEditor supports dynamic add/remove with real-time sync
 - URLAnalyzer includes input validation and error states
-- All components tested with 36 total passing tests
+- All components tested with 105 total passing tests
+
+### Phase 3.5: UI Improvements [IN PROGRESS]
+
+**Typeahead/Autocomplete Enhancement:**
+
+**Problem**: Current ProtocolEditor uses dropdown with 28+ protocols, which is clunky for common use cases (most users need http/https).
+
+**Solution**: Replace dropdown interface with typeahead autocomplete for better UX.
+
+**Library Choice**: **Downshift**
+- **Rationale**: 2M weekly downloads, excellent TypeScript support, headless design (works with Tailwind), WAI-ARIA compliant
+- **Benefits**: Small bundle size (14.34kb), flexible render patterns, strong LLM training context
+
+**Implementation Strategy:**
+1. Create reusable `TypeaheadInput` component using Downshift hooks
+2. Replace ProtocolEditor dropdown with typeahead interface
+3. Maintain all existing functionality (validation, context hints, colon auto-append)
+4. Design for reusability (future cURL options typeahead in Phase 4)
+
+**UX Improvements:**
+- Faster for common protocols (just type "https")
+- Still discoverable via filtered suggestions
+- Single input interface (no toggle between modes)
+- Better scalability for future protocols
 
 ### Phase 4: cURL Builder
 

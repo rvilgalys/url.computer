@@ -20,7 +20,7 @@ describe('ProtocolEditor', () => {
     expect(screen.queryByRole('combobox')).not.toBeInTheDocument();
   });
 
-  it('should render editable dropdown when isEditable is true', () => {
+  it('should render editable typeahead when isEditable is true', () => {
     render(
       <ProtocolEditor 
         protocol="https:" 
@@ -29,9 +29,9 @@ describe('ProtocolEditor', () => {
       />
     );
 
-    const select = screen.getByRole('combobox');
-    expect(select).toBeInTheDocument();
-    expect(select).toHaveValue('https:');
+    const input = screen.getByRole('combobox');
+    expect(input).toBeInTheDocument();
+    expect(input).toHaveValue('https');
   });
 
   it('should show correct context hints for web protocols', () => {
@@ -142,7 +142,7 @@ describe('ProtocolEditor', () => {
     expect(screen.getByText('⚙️ Custom scheme')).toBeInTheDocument();
   });
 
-  it('should call onProtocolChange when selecting a protocol from dropdown', () => {
+  it('should call onProtocolChange when typing in the typeahead input', () => {
     render(
       <ProtocolEditor 
         protocol="https:" 
@@ -151,27 +151,30 @@ describe('ProtocolEditor', () => {
       />
     );
 
-    const select = screen.getByRole('combobox');
-    fireEvent.change(select, { target: { value: 'ftp:' } });
+    const input = screen.getByRole('combobox');
+    fireEvent.change(input, { target: { value: 'ftp' } });
 
     expect(mockOnProtocolChange).toHaveBeenCalledWith('ftp:');
   });
 
-  it('should switch to custom input when selecting "Custom..." option', () => {
+  it('should show suggestions when typing', async () => {
     render(
       <ProtocolEditor 
-        protocol="https:" 
+        protocol="" 
         onProtocolChange={mockOnProtocolChange}
         isEditable={true}
       />
     );
 
-    const select = screen.getByRole('combobox');
-    fireEvent.change(select, { target: { value: 'custom' } });
+    const input = screen.getByRole('combobox');
+    fireEvent.change(input, { target: { value: 'h' } });
+    fireEvent.focus(input);
 
-    // Should now show a text input instead of select
-    expect(screen.getByRole('textbox')).toBeInTheDocument();
-    expect(screen.queryByRole('combobox')).not.toBeInTheDocument();
+    // Should show suggestions for protocols starting with 'h'
+    await waitFor(() => {
+      expect(screen.queryByText('https')).toBeInTheDocument();
+      expect(screen.queryByText('http')).toBeInTheDocument();
+    });
   });
 
   it('should handle custom protocol input with auto-formatting', () => {
@@ -183,8 +186,8 @@ describe('ProtocolEditor', () => {
       />
     );
 
-    // Component should start in custom mode since myprotocol: is not in the common list
-    const input = screen.getByRole('textbox');
+    // Component should show custom protocol without colon in input
+    const input = screen.getByRole('combobox');
     expect(input).toHaveValue('myprotocol');
 
     // Type a new custom protocol
@@ -193,7 +196,7 @@ describe('ProtocolEditor', () => {
     expect(mockOnProtocolChange).toHaveBeenCalledWith('customproto:');
   });
 
-  it('should not add colon if already present in custom input', () => {
+  it('should not add colon if already present in input', () => {
     render(
       <ProtocolEditor 
         protocol="custom:" 
@@ -202,56 +205,58 @@ describe('ProtocolEditor', () => {
       />
     );
 
-    const input = screen.getByRole('textbox');
+    const input = screen.getByRole('combobox');
     fireEvent.change(input, { target: { value: 'newprotocol:' } });
     
     expect(mockOnProtocolChange).toHaveBeenCalledWith('newprotocol:');
   });
 
-  it('should switch back to dropdown from custom input', () => {
+  it('should handle selection from suggestions dropdown', async () => {
     render(
       <ProtocolEditor 
-        protocol="custom:" 
+        protocol="" 
         onProtocolChange={mockOnProtocolChange}
         isEditable={true}
       />
     );
 
-    // Should start in custom mode
-    expect(screen.getByRole('textbox')).toBeInTheDocument();
-    
-    // Click the dropdown button (↓)
-    const dropdownButton = screen.getByTitle('Switch to dropdown');
-    fireEvent.click(dropdownButton);
+    const input = screen.getByRole('combobox');
+    fireEvent.change(input, { target: { value: 'f' } });
+    fireEvent.focus(input);
 
-    // Should switch back to dropdown
-    expect(screen.getByRole('combobox')).toBeInTheDocument();
-    expect(screen.queryByRole('textbox')).not.toBeInTheDocument();
+    // Wait for suggestions to appear
+    await waitFor(() => {
+      expect(screen.getByText('ftp')).toBeInTheDocument();
+    });
+
+    // Click on ftp suggestion
+    fireEvent.click(screen.getByText('ftp'));
     
-    expect(mockOnProtocolChange).toHaveBeenCalledWith('https:');
+    expect(mockOnProtocolChange).toHaveBeenCalledWith('ftp:');
   });
 
-  it('should include all cURL protocols in dropdown', () => {
+  it('should include all cURL protocols in suggestions', async () => {
     render(
       <ProtocolEditor 
-        protocol="https:" 
+        protocol="" 
         onProtocolChange={mockOnProtocolChange}
         isEditable={true}
       />
     );
 
-    const select = screen.getByRole('combobox');
+    const input = screen.getByRole('combobox');
     
-    // Check for a sample of protocols from different categories
-    expect(screen.getByRole('option', { name: 'https:' })).toBeInTheDocument();
-    expect(screen.getByRole('option', { name: 'ftp:' })).toBeInTheDocument();
-    expect(screen.getByRole('option', { name: 'smtp:' })).toBeInTheDocument();
-    expect(screen.getByRole('option', { name: 'ldap:' })).toBeInTheDocument();
-    expect(screen.getByRole('option', { name: 'rtmp:' })).toBeInTheDocument();
-    expect(screen.getByRole('option', { name: 'smb:' })).toBeInTheDocument();
-    expect(screen.getByRole('option', { name: 'dict:' })).toBeInTheDocument();
-    expect(screen.getByRole('option', { name: 'telnet:' })).toBeInTheDocument();
-    expect(screen.getByRole('option', { name: 'Custom...' })).toBeInTheDocument();
+    // Focus input to show all suggestions
+    fireEvent.focus(input);
+    
+    // Check for a sample of protocols from different categories in suggestions (first 10 shown by default)
+    await waitFor(() => {
+      expect(screen.getByText('https')).toBeInTheDocument();
+      expect(screen.getByText('http')).toBeInTheDocument();
+      expect(screen.getByText('ftp')).toBeInTheDocument();
+      expect(screen.getByText('ssh')).toBeInTheDocument();
+      expect(screen.getByText('sftp')).toBeInTheDocument();
+    });
   });
 
   it('should handle empty protocol gracefully', () => {
@@ -263,8 +268,9 @@ describe('ProtocolEditor', () => {
       />
     );
 
-    const select = screen.getByRole('combobox');
-    expect(select).toBeInTheDocument();
+    const input = screen.getByRole('combobox');
+    expect(input).toBeInTheDocument();
+    expect(input).toHaveValue('');
     
     // Should not show any context hint for empty protocol
     expect(screen.queryByText(/🔒|⚠️|📁|📧|📋|🎥|🗂️|📖|🕳️|🔄|💻|⚙️/)).not.toBeInTheDocument();

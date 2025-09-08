@@ -33,8 +33,8 @@ describe('URLAnalyzer', () => {
     expect(screen.getByText('Fragment')).toBeInTheDocument();
     expect(screen.getByText('Query Parameters')).toBeInTheDocument();
     
-    // Check parsed values - now that hostname and path are editable, they appear in input fields
-    expect(screen.getByText('https:')).toBeInTheDocument(); // protocol
+    // Check parsed values - now that hostname, path, and protocol are editable, they appear in input fields
+    expect(screen.getByDisplayValue('https')).toBeInTheDocument(); // protocol in typeahead input
     expect(screen.getByDisplayValue('api.example.com')).toBeInTheDocument(); // hostname in input
     expect(screen.getByDisplayValue('/v1/users')).toBeInTheDocument(); // path in input  
     expect(screen.getByText('#')).toBeInTheDocument(); // fragment hash
