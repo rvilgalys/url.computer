@@ -18,12 +18,15 @@ export default function HostnameEditor({
   const [localHostname, setLocalHostname] = useState(hostname);
   const [validationState, setValidationState] = useState<{ isValid: boolean; error?: string }>({ isValid: true });
   const [isHydrated, setIsHydrated] = useState(false);
+  const [isFocused, setIsFocused] = useState(false);
 
-  // Update local state when prop changes
+  // Update local state when prop changes, but only if not focused
   useEffect(() => {
-    setLocalHostname(hostname);
-    setValidationState({ isValid: true });
-  }, [hostname]);
+    if (!isFocused) {
+      setLocalHostname(hostname);
+      setValidationState({ isValid: true });
+    }
+  }, [hostname, isFocused]);
 
   // Set hydrated flag after component mounts
   useEffect(() => {
@@ -135,6 +138,8 @@ export default function HostnameEditor({
             type="text"
             value={localHostname}
             onChange={(e) => handleHostnameChange(e.target.value)}
+            onFocus={() => setIsFocused(true)}
+            onBlur={() => setIsFocused(false)}
             className={`
               font-mono flex-1 p-2 rounded border
               ${!validationState.isValid 
