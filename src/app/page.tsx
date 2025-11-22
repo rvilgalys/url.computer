@@ -2,7 +2,9 @@
 
 import { useUrlState } from '../hooks/useUrlState';
 import URLAnalyzer from '../components/URLAnalyzer';
+import CurlBuilder from '../components/CurlBuilder';
 import CopyButton from '../components/CopyButton';
+import { CurlOptions } from '../types';
 
 export default function Home() {
   const [state, setState] = useUrlState();
@@ -11,6 +13,13 @@ export default function Home() {
     setState(prev => ({
       ...prev,
       url: newUrl
+    }));
+  };
+
+  const handleCurlChange = (newCurlState: CurlOptions) => {
+    setState(prev => ({
+      ...prev,
+      curl: newCurlState
     }));
   };
 
@@ -79,6 +88,11 @@ export default function Home() {
         <URLAnalyzer 
           url={state.url} 
           onUrlChange={handleUrlChange} 
+        />
+        <CurlBuilder
+          url={state.url}
+          curlState={state.curl}
+          onCurlChange={handleCurlChange}
         />
       </main>
     </div>
