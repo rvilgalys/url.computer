@@ -16,7 +16,8 @@ const METHODS = ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'HEAD', 'OPTIONS'];
 interface Recipe {
   label: string;
   action: (s: CurlOptions) => CurlOptions;
-  color: string;
+  undo: (s: CurlOptions) => CurlOptions;
+  isActive: (s: CurlOptions) => boolean;
 }
 
 const RECIPES: Recipe[] = [
@@ -26,7 +27,8 @@ const RECIPES: Recipe[] = [
       if (s.options.includes('-v')) return s;
       return { ...s, options: [...s.options, '-v'] };
     },
-    color: 'bg-elf-mid-blue/70 text-white'
+    undo: (s: CurlOptions) => ({ ...s, options: s.options.filter(o => o !== '-v') }),
+    isActive: (s: CurlOptions) => s.options.includes('-v'),
   },
   { 
     label: 'JSON Body', 
@@ -36,7 +38,12 @@ const RECIPES: Recipe[] = [
       headers: { ...s.headers, 'Content-Type': 'application/json' }, 
       body: '{\n  "key": "value"\n}' 
     }),
-    color: 'bg-elf-yellow text-elf-dark-blue'
+    undo: (s: CurlOptions) => {
+      const newHeaders = { ...s.headers };
+      delete newHeaders['Content-Type'];
+      return { ...s, headers: newHeaders };
+    },
+    isActive: (s: CurlOptions) => s.method === 'POST' && s.headers['Content-Type'] === 'application/json',
   },
   { 
     label: 'Bearer Token', 
@@ -44,7 +51,12 @@ const RECIPES: Recipe[] = [
       ...s, 
       headers: { ...s.headers, 'Authorization': 'Bearer YOUR_TOKEN' } 
     }),
-    color: 'bg-elf-mid-blue/70 text-white'
+    undo: (s: CurlOptions) => {
+      const newHeaders = { ...s.headers };
+      delete newHeaders['Authorization'];
+      return { ...s, headers: newHeaders };
+    },
+    isActive: (s: CurlOptions) => !!s.headers['Authorization']?.startsWith('Bearer'),
   },
   { 
     label: 'Follow Redirects (-L)', 
@@ -52,7 +64,8 @@ const RECIPES: Recipe[] = [
       if (s.options.includes('-L')) return s;
       return { ...s, options: [...s.options, '-L'] };
     },
-    color: 'bg-elf-mid-blue/70 text-white'
+    undo: (s: CurlOptions) => ({ ...s, options: s.options.filter(o => o !== '-L') }),
+    isActive: (s: CurlOptions) => s.options.includes('-L'),
   },
   { 
     label: 'Insecure (-k)', 
@@ -60,7 +73,8 @@ const RECIPES: Recipe[] = [
       if (s.options.includes('-k')) return s;
       return { ...s, options: [...s.options, '-k'] };
     },
-    color: 'bg-elf-mid-blue/70 text-white'
+    undo: (s: CurlOptions) => ({ ...s, options: s.options.filter(o => o !== '-k') }),
+    isActive: (s: CurlOptions) => s.options.includes('-k'),
   },
 ];
 
@@ -85,7 +99,11 @@ export default function CurlBuilder({ url, curlState, onCurlChange }: CurlBuilde
   };
 
   const applyRecipe = (recipe: Recipe) => {
-    onCurlChange(recipe.action(curlState));
+    if (recipe.isActive(curlState)) {
+      onCurlChange(recipe.undo(curlState));
+    } else {
+      onCurlChange(recipe.action(curlState));
+    }
   };
 
   const handleHeadersChange = (newHeaders: Record<string, string>) => {
@@ -117,24 +135,24 @@ export default function CurlBuilder({ url, curlState, onCurlChange }: CurlBuilde
     <section className="bg-elf-dark-blue/50 rounded-xl border border-elf-mid-blue/20 shadow-lg p-6">
       <div className="flex items-center justify-between mb-4">
         <h2 className="text-sm font-medium text-elf-light-blue">cURL Builder</h2>
-        <button
-          onClick={handleReset}
-          className="text-sm text-elf-light-blue/60 hover:text-elf-light-blue transition-colors"
-        >
-          Reset
-        </button>
+        <div className="flex items-center gap-4">
+          <CopyButton 
+            textToCopy={() => command}
+            className="text-elf-light-blue/60 hover:text-elf-light-blue hover:bg-elf-mid-blue/20"
+            title="Copy Command"
+            size="sm"
+          />
+          <button
+            onClick={handleReset}
+            className="text-sm text-elf-light-blue/60 hover:text-elf-light-blue transition-colors"
+          >
+            Reset
+          </button>
+        </div>
       </div>
 
       <div className="relative bg-elf-dark-blue rounded-md p-4 font-mono text-white border border-elf-mid-blue/30 mb-6 overflow-x-auto">
-        <div className="absolute top-2 right-2">
-            <CopyButton 
-            textToCopy={() => command}
-            className="flex items-center gap-2 px-3 py-1 bg-elf-yellow text-elf-dark-blue rounded-md hover:bg-elf-orange font-semibold text-sm transition-colors"
-            title="Copy Command"
-            label="Copy"
-            />
-        </div>
-        <pre className="whitespace-pre-wrap break-all pr-20">
+        <pre className="whitespace-pre-wrap break-all">
             <code>{renderHighlightedCommand(command)}</code>
         </pre>
       </div>
@@ -156,15 +174,22 @@ export default function CurlBuilder({ url, curlState, onCurlChange }: CurlBuilde
         <div className="flex flex-col flex-1">
             <label className="text-xs text-elf-light-blue uppercase mb-1">Recipes</label>
             <div className="flex flex-wrap gap-2">
-                {RECIPES.map((recipe) => (
-                    <button
-                        key={recipe.label}
-                        onClick={() => applyRecipe(recipe)}
-                        className={`px-3 py-1 rounded-full text-sm transition-transform hover:-translate-y-0.5 shadow-sm hover:shadow-md font-medium ${recipe.color}`}
-                    >
-                        {recipe.label}
-                    </button>
-                ))}
+                {RECIPES.map((recipe) => {
+                    const isActive = recipe.isActive(curlState);
+                    return (
+                        <button
+                            key={recipe.label}
+                            onClick={() => applyRecipe(recipe)}
+                            className={`px-3 py-1 rounded-full text-sm transition-transform hover:-translate-y-0.5 shadow-sm hover:shadow-md font-medium border border-elf-mid-blue/30 ${
+                                isActive 
+                                    ? 'bg-elf-yellow text-elf-dark-blue' 
+                                    : 'bg-elf-mid-blue/20 hover:bg-elf-mid-blue/40 text-elf-light-blue hover:text-white'
+                            }`}
+                        >
+                            {recipe.label}
+                        </button>
+                    );
+                })}
             </div>
         </div>
       </div>
