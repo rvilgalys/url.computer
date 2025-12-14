@@ -3,6 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { generateCurlCommand } from '../lib/curl';
 import { CurlOptions } from '../types';
 import CopyButton from './CopyButton';
+import HeadersEditor from './HeadersEditor';
 
 interface CurlBuilderProps {
   url: string;
@@ -12,12 +13,55 @@ interface CurlBuilderProps {
 
 const METHODS = ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'HEAD', 'OPTIONS'];
 
-const RECIPES = [
-  { label: 'Verbose (-v)', action: (s: CurlOptions) => ({ ...s, options: [...s.options, '-v'] }) },
-  { label: 'JSON Body', action: (s: CurlOptions) => ({ ...s, method: 'POST', headers: { ...s.headers, 'Content-Type': 'application/json' }, body: '{\n  "key": "value"\n}' }) },
-  { label: 'Bearer Token', action: (s: CurlOptions) => ({ ...s, headers: { ...s.headers, 'Authorization': 'Bearer YOUR_TOKEN' } }) },
-  { label: 'Follow Redirects (-L)', action: (s: CurlOptions) => ({ ...s, options: [...s.options, '-L'] }) },
-  { label: 'Insecure (-k)', action: (s: CurlOptions) => ({ ...s, options: [...s.options, '-k'] }) },
+interface Recipe {
+  label: string;
+  action: (s: CurlOptions) => CurlOptions;
+  color: string;
+}
+
+const RECIPES: Recipe[] = [
+  { 
+    label: 'Verbose (-v)', 
+    action: (s: CurlOptions) => {
+      if (s.options.includes('-v')) return s;
+      return { ...s, options: [...s.options, '-v'] };
+    },
+    color: 'bg-elf-mid-blue/70 text-white'
+  },
+  { 
+    label: 'JSON Body', 
+    action: (s: CurlOptions) => ({ 
+      ...s, 
+      method: 'POST', 
+      headers: { ...s.headers, 'Content-Type': 'application/json' }, 
+      body: '{\n  "key": "value"\n}' 
+    }),
+    color: 'bg-elf-yellow text-elf-dark-blue'
+  },
+  { 
+    label: 'Bearer Token', 
+    action: (s: CurlOptions) => ({ 
+      ...s, 
+      headers: { ...s.headers, 'Authorization': 'Bearer YOUR_TOKEN' } 
+    }),
+    color: 'bg-elf-mid-blue/70 text-white'
+  },
+  { 
+    label: 'Follow Redirects (-L)', 
+    action: (s: CurlOptions) => {
+      if (s.options.includes('-L')) return s;
+      return { ...s, options: [...s.options, '-L'] };
+    },
+    color: 'bg-elf-mid-blue/70 text-white'
+  },
+  { 
+    label: 'Insecure (-k)', 
+    action: (s: CurlOptions) => {
+      if (s.options.includes('-k')) return s;
+      return { ...s, options: [...s.options, '-k'] };
+    },
+    color: 'bg-elf-mid-blue/70 text-white'
+  },
 ];
 
 export default function CurlBuilder({ url, curlState, onCurlChange }: CurlBuilderProps) {
@@ -40,9 +84,34 @@ export default function CurlBuilder({ url, curlState, onCurlChange }: CurlBuilde
     });
   };
 
-  const applyRecipe = (recipe: typeof RECIPES[0]) => {
+  const applyRecipe = (recipe: Recipe) => {
     onCurlChange(recipe.action(curlState));
   };
+
+  const handleHeadersChange = (newHeaders: Record<string, string>) => {
+    onCurlChange({ ...curlState, headers: newHeaders });
+  };
+
+  const handleBodyChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    onCurlChange({ ...curlState, body: e.target.value });
+  };
+
+  // Simple syntax highlighting
+  const renderHighlightedCommand = (cmd: string) => {
+    // This is a very basic highlighter. For production, a library like prismjs would be better.
+    // But we want to keep it lightweight as per requirements.
+    const parts = cmd.split(' ');
+    return parts.map((part, index) => {
+      let className = 'text-white';
+      if (part === 'curl') className = 'text-elf-orange';
+      else if (part.startsWith('-')) className = 'text-elf-yellow';
+      else if (part.startsWith("'") || part.startsWith('"')) className = 'text-elf-light-blue';
+      
+      return <span key={index} className={className}>{part} </span>;
+    });
+  };
+
+  const showBodyEditor = ['POST', 'PUT', 'PATCH', 'DELETE'].includes(curlState.method) || curlState.body.length > 0;
 
   return (
     <section className="bg-elf-dark-blue/50 rounded-xl border border-elf-mid-blue/20 shadow-lg p-6">
@@ -56,20 +125,18 @@ export default function CurlBuilder({ url, curlState, onCurlChange }: CurlBuilde
         </button>
       </div>
 
-      <div className="flex gap-2 items-start mb-6">
-        <div className="flex-1 bg-elf-dark-blue rounded-md p-4 font-mono text-elf-light-blue border border-elf-mid-blue/30 focus-within:ring-2 focus-within:ring-elf-yellow focus-within:border-transparent transition-all">
-          <textarea
-            value={command}
-            onChange={(e) => setCommand(e.target.value)}
-            className="w-full h-32 bg-transparent resize-y focus:outline-none text-sm md:text-base"
-            spellCheck={false}
-          />
+      <div className="relative bg-elf-dark-blue rounded-md p-4 font-mono text-white border border-elf-mid-blue/30 mb-6 overflow-x-auto">
+        <div className="absolute top-2 right-2">
+            <CopyButton 
+            textToCopy={() => command}
+            className="flex items-center gap-2 px-3 py-1 bg-elf-yellow text-elf-dark-blue rounded-md hover:bg-elf-orange font-semibold text-sm transition-colors"
+            title="Copy Command"
+            label="Copy"
+            />
         </div>
-        <CopyButton 
-          textToCopy={() => command}
-          className="p-3 text-elf-light-blue/60 hover:text-elf-light-blue hover:bg-elf-mid-blue/20 border border-elf-mid-blue/30 rounded-md bg-elf-dark-blue"
-          title="Copy Command"
-        />
+        <pre className="whitespace-pre-wrap break-all pr-20">
+            <code>{renderHighlightedCommand(command)}</code>
+        </pre>
       </div>
 
       <div className="flex flex-wrap items-center gap-4 mb-6">
@@ -93,7 +160,7 @@ export default function CurlBuilder({ url, curlState, onCurlChange }: CurlBuilde
                     <button
                         key={recipe.label}
                         onClick={() => applyRecipe(recipe)}
-                        className="px-3 py-1 bg-elf-mid-blue/20 hover:bg-elf-mid-blue/40 text-elf-light-blue hover:text-white rounded-full text-sm transition-colors border border-elf-mid-blue/30"
+                        className={`px-3 py-1 rounded-full text-sm transition-transform hover:-translate-y-0.5 shadow-sm hover:shadow-md font-medium ${recipe.color}`}
                     >
                         {recipe.label}
                     </button>
@@ -101,6 +168,23 @@ export default function CurlBuilder({ url, curlState, onCurlChange }: CurlBuilde
             </div>
         </div>
       </div>
+
+      <HeadersEditor headers={curlState.headers} onHeadersChange={handleHeadersChange} />
+
+      {showBodyEditor && (
+        <div className="mt-6">
+            <h3 className="text-xs text-elf-light-blue uppercase mb-1 tracking-wide">
+                Request Body
+            </h3>
+            <textarea
+                value={curlState.body}
+                onChange={handleBodyChange}
+                className="w-full h-32 bg-elf-dark-blue rounded-md p-4 font-mono text-white border border-elf-mid-blue/30 focus:outline-none focus:ring-2 focus:ring-elf-yellow focus:border-transparent text-sm md:text-base resize-y"
+                placeholder='{ "key": "value" }'
+                spellCheck={false}
+            />
+        </div>
+      )}
     </section>
   );
 }
