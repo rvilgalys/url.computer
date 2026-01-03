@@ -105,10 +105,63 @@ describe("CurlBuilder", () => {
     const jsonChip = screen.getByText("JSON Body");
     fireEvent.click(jsonChip);
 
-    // Should remove Content-Type but keep other state (like body/method) as per undo logic
-    // The undo logic specifically removes the header.
+    // Should remove Content-Type AND clear body as per undo logic
     const lastCall = mockOnCurlChange.mock.calls[0][0];
     expect(lastCall.headers["Content-Type"]).toBeUndefined();
+    expect(lastCall.body).toBe("");
+  });
+
+  it("should allow adding arbitrary body to GET request", () => {
+    // Start with a GET request (no body by default)
+    render(
+      <CurlBuilder
+        url={defaultUrl}
+        curlState={defaultState}
+        onCurlChange={mockOnCurlChange}
+      />
+    );
+
+    // Initial check - body input shouldn't be visible (depending on implementation details,
+    // but the button to add it should be)
+    // Note: Use a more specific query if "Add Body" appears in multiple places,
+    // but typically it's a button.
+    const addBodyBtn = screen.getByText("Add Body");
+    fireEvent.click(addBodyBtn);
+
+    // Now body textarea should be visible
+    const bodyInput = screen.getByPlaceholderText('{ "key": "value" }');
+    fireEvent.change(bodyInput, { target: { value: "test body" } });
+
+    expect(mockOnCurlChange).toHaveBeenCalledWith(
+      expect.objectContaining({
+        body: "test body",
+      })
+    );
+  });
+
+  it("should allow removing body", () => {
+    const activeState: CurlOptions = {
+      ...defaultState,
+      method: "POST",
+      body: "some content",
+    };
+
+    render(
+      <CurlBuilder
+        url={defaultUrl}
+        curlState={activeState}
+        onCurlChange={mockOnCurlChange}
+      />
+    );
+
+    const removeBodyBtn = screen.getByTitle("Remove Body");
+    fireEvent.click(removeBodyBtn);
+
+    expect(mockOnCurlChange).toHaveBeenCalledWith(
+      expect.objectContaining({
+        body: "",
+      })
+    );
   });
 
   it("should toggle Bearer Token recipe", () => {
