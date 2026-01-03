@@ -1,9 +1,9 @@
-import { generateCurlCommand, CurlOptions } from "./curl";
+import { generateCurlCommand, CurlOptions } from "../../lib/curl";
 
 describe("generateCurlCommand", () => {
   const defaultUrl = "https://api.example.com/v1/users";
 
-  it("generates a simple GET request by default", () => {
+  it("generates a simple GET request by default (single line legacy)", () => {
     const options: CurlOptions = {
       method: "GET",
       headers: {},
@@ -14,7 +14,40 @@ describe("generateCurlCommand", () => {
     expect(command).toBe("curl 'https://api.example.com/v1/users'");
   });
 
-  it("adds -X POST for POST requests", () => {
+  it("generates multi-line command with curl and URL on first line", () => {
+    const options: CurlOptions = {
+      method: "GET",
+      headers: { Header: "Value" },
+      body: "",
+      options: [],
+    };
+    const command = generateCurlCommand(defaultUrl, options, true);
+
+    const lines = command.split("\n");
+    // Line 0 should contain curl and URL
+    expect(lines[0]).toContain("curl");
+    expect(lines[0]).toContain("'https://api.example.com/v1/users'");
+    expect(lines[0]).toContain(" \\");
+
+    // Line 1 should be indented header
+    expect(lines[1]).toContain("  -H 'Header: Value'");
+  });
+
+  it("includes Method on first line in multi-line mode", () => {
+    const options: CurlOptions = {
+      method: "POST",
+      headers: {},
+      body: "",
+      options: [],
+    };
+    const command = generateCurlCommand(defaultUrl, options, true);
+    // Should be `curl -X POST 'url'`
+    expect(command).toContain(
+      "curl -X POST 'https://api.example.com/v1/users'"
+    );
+  });
+
+  it("adds -X POST for POST requests (single line)", () => {
     const options: CurlOptions = {
       method: "POST",
       headers: {},
@@ -72,7 +105,6 @@ describe("generateCurlCommand", () => {
       options: [],
     };
     const command = generateCurlCommand(urlWithQuote, options, false);
-    // Ideally it should be 'https://example.com/path'\''with'\''quote'
     expect(command).toContain("'\\''");
   });
 });

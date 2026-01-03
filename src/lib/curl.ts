@@ -1,22 +1,45 @@
-
-import { CurlOptions } from '../types';
+import { CurlOptions } from "../types";
 
 export { type CurlOptions };
 
-export function generateCurlCommand(url: string, options: CurlOptions): string {
-  const parts: string[] = ['curl'];
+export function generateCurlCommand(
+  url: string,
+  options: CurlOptions,
+  multiline = true
+): string {
+  const parts: string[] = [];
 
-  // Method
-  if (options.method !== 'GET') {
-    parts.push(`-X ${options.method}`);
+  const separator = multiline ? " \\\n  " : " ";
+
+  // Start with curl, method, and URL on the first line/chunk
+  let firstLine = "curl";
+  if (options.method !== "GET") {
+    firstLine += ` -X ${options.method}`;
   }
-
-  // URL (escaped)
-  parts.push(`'${escapeSingleQuotes(url)}'`);
+  firstLine += ` '${escapeSingleQuotes(url)}'`;
+  parts.push(firstLine);
 
   // Options
   if (options.options && options.options.length > 0) {
-    parts.push(...options.options);
+    if (multiline) {
+      // checks for simple short flags (like -v, -L, -k) vs long flags
+      const shortFlags = options.options.filter(
+        (o) => o.startsWith("-") && o.length <= 3
+      );
+      const longFlags = options.options.filter(
+        (o) => !o.startsWith("-") || o.length > 3
+      );
+
+      if (shortFlags.length > 0) {
+        parts.push(shortFlags.join(" "));
+      }
+      if (longFlags.length > 0) {
+        // Long flags each on own line
+        parts.push(...longFlags);
+      }
+    } else {
+      parts.push(...options.options);
+    }
   }
 
   // Headers
@@ -25,11 +48,15 @@ export function generateCurlCommand(url: string, options: CurlOptions): string {
   });
 
   // Body
-  if (options.body && options.method !== 'GET' && options.method !== 'HEAD') {
+  if (
+    options.body &&
+    (["POST", "PUT", "PATCH", "DELETE"].includes(options.method) ||
+      options.body.length > 0)
+  ) {
     parts.push(`-d '${escapeSingleQuotes(options.body)}'`);
   }
 
-  return parts.join(' ');
+  return parts.join(separator);
 }
 
 function escapeSingleQuotes(str: string): string {

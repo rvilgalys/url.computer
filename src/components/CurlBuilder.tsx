@@ -3,6 +3,7 @@ import { generateCurlCommand } from "../lib/curl";
 import { CurlOptions } from "../types";
 import CopyButton from "./CopyButton";
 import HeadersEditor from "./HeadersEditor";
+import { useLocalStorage } from "../hooks/useLocalStorage";
 
 interface CurlBuilderProps {
   url: string;
@@ -95,10 +96,15 @@ export default function CurlBuilder({
 }: CurlBuilderProps) {
   const [command, setCommand] = useState("");
   const [forceShowBody, setForceShowBody] = useState(false);
+  // Default to multi-line (singleLine = false)
+  const [isSingleLine, setIsSingleLine] = useLocalStorage<boolean>(
+    "curl-single-line",
+    false
+  );
 
   useEffect(() => {
-    setCommand(generateCurlCommand(url, curlState));
-  }, [url, curlState]);
+    setCommand(generateCurlCommand(url, curlState, !isSingleLine));
+  }, [url, curlState, isSingleLine]);
 
   const handleMethodChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     onCurlChange({ ...curlState, method: e.target.value });
@@ -170,6 +176,39 @@ export default function CurlBuilder({
           cURL Builder
         </h2>
         <div className="flex items-center gap-4">
+          <label className="flex items-center gap-2 text-sm text-elf-light-blue/80 cursor-pointer select-none group">
+            <div
+              className={`w-4 h-4 rounded border flex items-center justify-center transition-colors ${
+                isSingleLine
+                  ? "bg-elf-yellow border-elf-yellow"
+                  : "bg-elf-dark-blue border-elf-mid-blue/30 group-hover:border-elf-mid-blue/60"
+              }`}
+            >
+              {isSingleLine && (
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="12"
+                  height="12"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="#023047"
+                  strokeWidth="4"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <polyline points="20 6 9 17 4 12"></polyline>
+                </svg>
+              )}
+            </div>
+            <input
+              type="checkbox"
+              checked={isSingleLine}
+              onChange={(e) => setIsSingleLine(e.target.checked)}
+              className="hidden"
+            />
+            Single Line
+          </label>
+          <div className="h-4 w-px bg-elf-mid-blue/30" />
           <CopyButton
             textToCopy={() => command}
             className="text-elf-light-blue/60 hover:text-elf-light-blue hover:bg-elf-mid-blue/20"
