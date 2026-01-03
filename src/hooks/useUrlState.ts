@@ -1,24 +1,19 @@
-
-import { useState, useEffect } from 'react';
-import { AppState } from '../types';
-import lz from 'lz-string';
+import { useState, useEffect } from "react";
+import { AppState } from "../types";
+import lz from "lz-string";
 
 const defaultState: AppState = {
-  url: 'https://api.example.com/v1/users?page=1&pageSize=10',
+  url: "https://api.example.com/v1/users?page=1&pageSize=10",
   curl: {
-    method: 'GET',
+    method: "GET",
     headers: {},
-    body: '',
+    body: "",
     options: [],
   },
 };
 
-const getInitialState = (): AppState => {
-  if (typeof window === 'undefined') {
-    return defaultState;
-  }
+const parseHash = (hash: string): AppState | null => {
   try {
-    const hash = window.location.hash.slice(1);
     if (hash) {
       const decompressed = lz.decompressFromBase64(hash);
       if (decompressed) {
@@ -26,28 +21,50 @@ const getInitialState = (): AppState => {
       }
     }
   } catch (error) {
-    console.error('Failed to parse state from URL hash', error);
+    console.error("Failed to parse state from URL hash", error);
   }
-  return defaultState;
+  return null;
 };
 
 export const useUrlState = () => {
-  const [state, setState] = useState<AppState>(getInitialState());
+  const [state, setState] = useState<AppState>(defaultState);
+  const [isInitialized, setIsInitialized] = useState(false);
 
+  // Read from hash on mount
   useEffect(() => {
+    if (typeof window !== "undefined") {
+      const hash = window.location.hash.slice(1);
+      const parsed = parseHash(hash);
+      if (parsed) {
+        setState(parsed);
+      }
+      setIsInitialized(true);
+    }
+  }, []);
+
+  // Sync state to hash
+  useEffect(() => {
+    if (!isInitialized) return;
+
     // We only want to update the hash if the state is not the default state,
     // or if a hash already exists. This prevents adding a hash to a clean URL on load.
-    const currentHash = typeof window !== 'undefined' ? window.location.hash.slice(1) : '';
+    const currentHash =
+      typeof window !== "undefined" ? window.location.hash.slice(1) : "";
     const serializedState = JSON.stringify(state);
+
     // A simple deep-ish equal
     if (JSON.stringify(defaultState) === serializedState && !currentHash) {
-        return;
+      return;
     }
 
     const compressedState = lz.compressToBase64(serializedState);
-    // Update the hash without causing a page reload
-    window.history.replaceState(null, '', `#${compressedState}`);
-  }, [state]);
+    if (typeof window !== "undefined") {
+      const newHash = `#${compressedState}`;
+      if (window.location.hash !== newHash) {
+        window.history.replaceState(null, "", newHash);
+      }
+    }
+  }, [state, isInitialized]);
 
   return [state, setState] as const;
 };

@@ -1,4 +1,4 @@
-import { renderHook, act } from "@testing-library/react";
+import { renderHook, act, waitFor } from "@testing-library/react";
 import { useUrlState } from "../../hooks/useUrlState";
 import { AppState } from "../../types";
 import lz from "lz-string";
@@ -30,23 +30,41 @@ describe("useUrlState", () => {
     expect(result.current[0]).toEqual(defaultState);
   });
 
-  it("should initialize with state from a valid URL hash", () => {
+  it("should initialize with state from a valid URL hash", async () => {
     const testState: AppState = { ...defaultState, url: "http://test.com" };
     const compressedState = lz.compressToBase64(JSON.stringify(testState));
     setUrlHash(compressedState);
 
     const { result } = renderHook(() => useUrlState());
-    expect(result.current[0]).toEqual(testState);
+
+    // Initial state check removed as renderHook may flush effects immediately in this environment
+
+    // Wait for effect to load state from hash
+    await waitFor(() => {
+      expect(result.current[0]).toEqual(testState);
+    });
   });
 
-  it("should return default state if the URL hash is invalid or corrupted", () => {
+  it("should return default state if the URL hash is invalid or corrupted", async () => {
     setUrlHash("this-is-not-valid-base64-or-json");
     const { result } = renderHook(() => useUrlState());
+
     expect(result.current[0]).toEqual(defaultState);
+    // Even after wait, it should remain default
+    await waitFor(() => {
+      expect(result.current[0]).toEqual(defaultState);
+    });
   });
 
-  it("should update the URL hash when the state changes", () => {
+  it("should update the URL hash when the state changes", async () => {
     const { result } = renderHook(() => useUrlState());
+
+    // Wait for initialization to complete
+    await waitFor(() => {
+      // Just wait for next tick essentially, or check if initialized (internal state we can't check easily)
+      // But default -> default is fine.
+    });
+
     const newState: AppState = { ...defaultState, url: "http://new-url.com" };
 
     act(() => {
@@ -54,7 +72,9 @@ describe("useUrlState", () => {
     });
 
     const expectedHash = lz.compressToBase64(JSON.stringify(newState));
-    expect(window.location.hash).toEqual(`#${expectedHash}`);
+    await waitFor(() => {
+      expect(window.location.hash).toEqual(`#${expectedHash}`);
+    });
   });
 
   it("should not create a hash on initial render if state is default and no hash exists", () => {
@@ -62,19 +82,25 @@ describe("useUrlState", () => {
     expect(window.location.hash).toEqual("");
   });
 
-  it("should update the hash when state changes from a custom state back to the default state", () => {
+  it("should update the hash when state changes from a custom state back to the default state", async () => {
     const testState: AppState = { ...defaultState, url: "http://test.com" };
     const compressedState = lz.compressToBase64(JSON.stringify(testState));
     setUrlHash(compressedState);
 
     const { result } = renderHook(() => useUrlState());
-    expect(result.current[0]).toEqual(testState); // Verify initial state from hash
+
+    // Wait for init
+    await waitFor(() => {
+      expect(result.current[0]).toEqual(testState);
+    });
 
     act(() => {
       result.current[1](defaultState); // Update state back to default
     });
 
     const expectedHash = lz.compressToBase64(JSON.stringify(defaultState));
-    expect(window.location.hash).toEqual(`#${expectedHash}`);
+    await waitFor(() => {
+      expect(window.location.hash).toEqual(`#${expectedHash}`);
+    });
   });
 });
