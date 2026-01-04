@@ -111,6 +111,147 @@ describe("CurlBuilder", () => {
     expect(lastCall.body).toBe("");
   });
 
+  it("should add User Agent when triggered", () => {
+    render(
+      <CurlBuilder
+        url={defaultUrl}
+        curlState={defaultState}
+        onCurlChange={mockOnCurlChange}
+      />
+    );
+
+    const uaChip = screen.getByText("User Agent");
+    fireEvent.click(uaChip);
+
+    expect(mockOnCurlChange).toHaveBeenCalledWith(
+      expect.objectContaining({
+        options: expect.arrayContaining([
+          expect.stringContaining("-A 'cURL (url.computer)'"),
+        ]),
+      })
+    );
+  });
+
+  it("should configure Multipart Form correctly", () => {
+    render(
+      <CurlBuilder
+        url={defaultUrl}
+        curlState={defaultState}
+        onCurlChange={mockOnCurlChange}
+      />
+    );
+
+    const multipartChip = screen.getByText("Multipart Form");
+    fireEvent.click(multipartChip);
+
+    expect(mockOnCurlChange).toHaveBeenCalledWith(
+      expect.objectContaining({
+        method: "POST",
+        headers: expect.objectContaining({
+          "Content-Type": "multipart/form-data; boundary=---boundary",
+        }),
+        body: expect.stringContaining("-----boundary"),
+      })
+    );
+  });
+
+  it("should add SSH Key option", () => {
+    render(
+      <CurlBuilder
+        url={defaultUrl}
+        curlState={defaultState}
+        onCurlChange={mockOnCurlChange}
+      />
+    );
+
+    const chip = screen.getByText("SSH Key");
+    fireEvent.click(chip);
+
+    expect(mockOnCurlChange).toHaveBeenCalledWith(
+      expect.objectContaining({
+        options: expect.arrayContaining([
+          expect.stringContaining("--key 'private_key.pem'"),
+        ]),
+      })
+    );
+  });
+
+  it("should add Output to File (-O) option", () => {
+    render(
+      <CurlBuilder
+        url={defaultUrl}
+        curlState={defaultState}
+        onCurlChange={mockOnCurlChange}
+      />
+    );
+
+    const chip = screen.getByText("Output to File (-O)");
+    fireEvent.click(chip);
+
+    expect(mockOnCurlChange).toHaveBeenCalledWith(
+      expect.objectContaining({
+        options: expect.arrayContaining(["-O"]),
+      })
+    );
+  });
+
+  it("should add Basic Auth option", () => {
+    render(
+      <CurlBuilder
+        url={defaultUrl}
+        curlState={defaultState}
+        onCurlChange={mockOnCurlChange}
+      />
+    );
+
+    const chip = screen.getByText("Basic Auth");
+    fireEvent.click(chip);
+
+    expect(mockOnCurlChange).toHaveBeenCalledWith(
+      expect.objectContaining({
+        options: expect.arrayContaining(["-u 'username:password'"]),
+      })
+    );
+  });
+
+  it("should add Proxy option", () => {
+    render(
+      <CurlBuilder
+        url={defaultUrl}
+        curlState={defaultState}
+        onCurlChange={mockOnCurlChange}
+      />
+    );
+
+    const chip = screen.getByText("Proxy");
+    fireEvent.click(chip);
+
+    expect(mockOnCurlChange).toHaveBeenCalledWith(
+      expect.objectContaining({
+        options: expect.arrayContaining(["-x 'proxy:123'"]),
+      })
+    );
+  });
+
+  it("should add Cookies option", () => {
+    render(
+      <CurlBuilder
+        url={defaultUrl}
+        curlState={defaultState}
+        onCurlChange={mockOnCurlChange}
+      />
+    );
+
+    const chip = screen.getByText("Cookies");
+    fireEvent.click(chip);
+
+    expect(mockOnCurlChange).toHaveBeenCalledWith(
+      expect.objectContaining({
+        options: expect.arrayContaining(["-b 'name=value'"]),
+      })
+    );
+  });
+
   it("should allow adding arbitrary body to GET request", () => {
     // Start with a GET request (no body by default)
     render(

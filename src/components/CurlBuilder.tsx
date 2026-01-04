@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { generateCurlCommand } from "../lib/curl";
+import { recipes, Recipe } from "../lib/curlRecipes";
 import { CurlOptions } from "../types";
 import CopyButton from "./CopyButton";
 import HeadersEditor from "./HeadersEditor";
@@ -12,82 +13,6 @@ interface CurlBuilderProps {
 }
 
 const METHODS = ["GET", "POST", "PUT", "PATCH", "DELETE", "HEAD", "OPTIONS"];
-
-interface Recipe {
-  label: string;
-  action: (s: CurlOptions) => CurlOptions;
-  undo: (s: CurlOptions) => CurlOptions;
-  isActive: (s: CurlOptions) => boolean;
-}
-
-const RECIPES: Recipe[] = [
-  {
-    label: "Verbose (-v)",
-    action: (s: CurlOptions) => {
-      if (s.options.includes("-v")) return s;
-      return { ...s, options: [...s.options, "-v"] };
-    },
-    undo: (s: CurlOptions) => ({
-      ...s,
-      options: s.options.filter((o) => o !== "-v"),
-    }),
-    isActive: (s: CurlOptions) => s.options.includes("-v"),
-  },
-  {
-    label: "JSON Body",
-    action: (s: CurlOptions) => ({
-      ...s,
-      method: "POST",
-      headers: { ...s.headers, "Content-Type": "application/json" },
-      body: '{\n  "key": "value"\n}',
-    }),
-    undo: (s: CurlOptions) => {
-      const newHeaders = { ...s.headers };
-      delete newHeaders["Content-Type"];
-      return { ...s, headers: newHeaders, body: "" };
-    },
-    isActive: (s: CurlOptions) =>
-      s.method === "POST" && s.headers["Content-Type"] === "application/json",
-  },
-  {
-    label: "Bearer Token",
-    action: (s: CurlOptions) => ({
-      ...s,
-      headers: { ...s.headers, Authorization: "Bearer YOUR_TOKEN" },
-    }),
-    undo: (s: CurlOptions) => {
-      const newHeaders = { ...s.headers };
-      delete newHeaders["Authorization"];
-      return { ...s, headers: newHeaders };
-    },
-    isActive: (s: CurlOptions) =>
-      !!s.headers["Authorization"]?.startsWith("Bearer"),
-  },
-  {
-    label: "Follow Redirects (-L)",
-    action: (s: CurlOptions) => {
-      if (s.options.includes("-L")) return s;
-      return { ...s, options: [...s.options, "-L"] };
-    },
-    undo: (s: CurlOptions) => ({
-      ...s,
-      options: s.options.filter((o) => o !== "-L"),
-    }),
-    isActive: (s: CurlOptions) => s.options.includes("-L"),
-  },
-  {
-    label: "Insecure (-k)",
-    action: (s: CurlOptions) => {
-      if (s.options.includes("-k")) return s;
-      return { ...s, options: [...s.options, "-k"] };
-    },
-    undo: (s: CurlOptions) => ({
-      ...s,
-      options: s.options.filter((o) => o !== "-k"),
-    }),
-    isActive: (s: CurlOptions) => s.options.includes("-k"),
-  },
-];
 
 export default function CurlBuilder({
   url,
@@ -253,7 +178,7 @@ export default function CurlBuilder({
             Recipes
           </label>
           <div className="flex flex-wrap gap-2">
-            {RECIPES.map((recipe) => {
+            {recipes.map((recipe) => {
               const isActive = recipe.isActive(curlState);
               return (
                 <button
