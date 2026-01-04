@@ -1,33 +1,33 @@
-'use client';
+"use client";
 
-import { useUrlState } from '../hooks/useUrlState';
-import URLAnalyzer from '../components/URLAnalyzer';
-import CurlBuilder from '../components/CurlBuilder';
-import CopyButton from '../components/CopyButton';
-import { CurlOptions } from '../types';
+import { useUrlState } from "../../hooks/useUrlState";
+import URLAnalyzer from "../../components/URLAnalyzer";
+import CurlBuilder from "../../components/CurlBuilder";
+import CopyButton from "../../components/CopyButton";
+import { CurlOptions } from "../../types";
 
 export default function Home() {
   const [state, setState] = useUrlState();
 
   const handleUrlChange = (newUrl: string) => {
-    setState(prev => ({
+    setState((prev) => ({
       ...prev,
-      url: newUrl
+      url: newUrl,
     }));
   };
 
   const handleCurlChange = (newCurlState: CurlOptions) => {
-    setState(prev => ({
+    setState((prev) => ({
       ...prev,
-      curl: newCurlState
+      curl: newCurlState,
     }));
   };
 
   const getShareableLink = () => {
-    if (typeof window !== 'undefined') {
+    if (typeof window !== "undefined") {
       return window.location.href; // This includes the current hash with state
     }
-    return ''; // Fallback for SSR
+    return ""; // Fallback for SSR
   };
 
   return (
@@ -59,7 +59,7 @@ export default function Home() {
             url.computer
           </h1>
         </div>
-        
+
         <div className="flex items-center gap-2 px-4 py-2 bg-elf-mid-blue text-white rounded-lg hover:bg-elf-mid-blue/80 transition-colors shadow-md">
           <svg
             xmlns="http://www.w3.org/2000/svg"
@@ -85,10 +85,7 @@ export default function Home() {
       </header>
 
       <main className="space-y-6">
-        <URLAnalyzer 
-          url={state.url} 
-          onUrlChange={handleUrlChange} 
-        />
+        <URLAnalyzer url={state.url} onUrlChange={handleUrlChange} />
         <CurlBuilder
           url={state.url}
           curlState={state.curl}
