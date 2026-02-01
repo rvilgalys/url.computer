@@ -109,6 +109,7 @@ export default function Home() {
           url={state.url}
           curlState={state.curl}
           onCurlChange={handleCurlChange}
+          onUrlChange={handleUrlChange}
         />
       </main>
     </div>

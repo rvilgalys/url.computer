@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from "react";
-import { generateCurlCommand } from "../lib/curl";
+import React, { useState, useEffect, useRef, useCallback } from "react";
+import { generateCurlCommand, parseCurlCommand } from "../lib/curl";
 import { recipes, Recipe } from "../lib/curlRecipes";
 import { CurlOptions } from "../types";
 import CopyButton from "./CopyButton";
@@ -10,6 +10,7 @@ interface CurlBuilderProps {
   url: string;
   curlState: CurlOptions;
   onCurlChange: (newState: CurlOptions) => void;
+  onUrlChange?: (newUrl: string) => void;
 }
 
 const METHODS = ["GET", "POST", "PUT", "PATCH", "DELETE", "HEAD", "OPTIONS"];
@@ -18,18 +19,117 @@ export default function CurlBuilder({
   url,
   curlState,
   onCurlChange,
+  onUrlChange,
 }: CurlBuilderProps) {
-  const [command, setCommand] = useState("");
+  // The generated command from state (source of truth when not editing)
+  const [generatedCommand, setGeneratedCommand] = useState("");
+  // The text in the editable textarea (may differ from generated during editing)
+  const [editableText, setEditableText] = useState("");
+  // Track if user is currently editing (dirty state)
+  const [isEditing, setIsEditing] = useState(false);
+  // Parse error message (null when valid)
+  const [parseError, setParseError] = useState<string | null>(null);
+  // Body editor visibility
   const [forceShowBody, setForceShowBody] = useState(false);
   // Default to multi-line (singleLine = false)
   const [isSingleLine, setIsSingleLine] = useLocalStorage<boolean>(
     "curl-single-line",
     false,
   );
+  // Debounce timer ref
+  const debounceRef = useRef<NodeJS.Timeout | null>(null);
 
+  // Ref to track what we've already generated to detect external changes
+  const lastGeneratedRef = useRef("");
+
+  // Generate the command from state
   useEffect(() => {
-    setCommand(generateCurlCommand(url, curlState, !isSingleLine));
-  }, [url, curlState, isSingleLine]);
+    const cmd = generateCurlCommand(url, curlState, !isSingleLine);
+
+    // Check if the state actually changed from outside vs just us updating it
+    const isExternalChange = cmd !== lastGeneratedRef.current;
+
+    setGeneratedCommand(cmd);
+    lastGeneratedRef.current = cmd;
+
+    // Only update editable text if not currently editing
+    // OR if the state was updated from outside (e.g. parent changed the URL)
+    if (!isEditing) {
+      // Revert if no error OR if external state has moved on
+      if (!parseError || isExternalChange) {
+        setEditableText(cmd);
+        if (isExternalChange) {
+          setParseError(null);
+        }
+      }
+    }
+  }, [url, curlState, isSingleLine, isEditing, parseError]);
+
+  // Parse the curl text and update state
+  const parseAndApply = useCallback(
+    (text: string) => {
+      const result = parseCurlCommand(text);
+
+      if (!result.isValid) {
+        setParseError(result.error || "Invalid cURL command");
+        return;
+      }
+
+      setParseError(null);
+
+      // Update URL if changed and callback provided
+      if (result.url && result.url !== url && onUrlChange) {
+        onUrlChange(result.url);
+      }
+
+      // Check if curlOptions actually changed to avoid unnecessary updates
+      const newOptions = result.curlOptions;
+      const hasChanges =
+        newOptions.method !== curlState.method ||
+        newOptions.body !== curlState.body ||
+        JSON.stringify(newOptions.headers) !==
+          JSON.stringify(curlState.headers) ||
+        JSON.stringify(newOptions.options) !==
+          JSON.stringify(curlState.options);
+
+      if (hasChanges) {
+        onCurlChange(newOptions);
+      }
+    },
+    [url, curlState, onCurlChange, onUrlChange],
+  );
+
+  // Handle textarea input changes
+  const handleTextChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    const newText = e.target.value;
+    setEditableText(newText);
+    setIsEditing(true);
+
+    // Clear previous debounce
+    if (debounceRef.current) {
+      clearTimeout(debounceRef.current);
+    }
+
+    // Debounce parsing by 500ms
+    debounceRef.current = setTimeout(() => {
+      parseAndApply(newText);
+    }, 500);
+  };
+
+  // Handle blur - finalize editing
+  const handleTextBlur = () => {
+    // Clear any pending debounce and parse immediately
+    if (debounceRef.current) {
+      clearTimeout(debounceRef.current);
+    }
+    parseAndApply(editableText);
+    setIsEditing(false);
+  };
+
+  // Handle focus
+  const handleTextFocus = () => {
+    setIsEditing(true);
+  };
 
   const handleMethodChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     onCurlChange({ ...curlState, method: e.target.value });
@@ -42,6 +142,8 @@ export default function CurlBuilder({
       body: "",
       options: [],
     });
+    setParseError(null);
+    setIsEditing(false);
   };
 
   const applyRecipe = (recipe: Recipe) => {
@@ -58,26 +160,6 @@ export default function CurlBuilder({
 
   const handleBodyChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     onCurlChange({ ...curlState, body: e.target.value });
-  };
-
-  // Simple syntax highlighting
-  const renderHighlightedCommand = (cmd: string) => {
-    // This is a very basic highlighter. For production, a library like prismjs would be better.
-    // But we want to keep it lightweight as per requirements.
-    const parts = cmd.split(" ");
-    return parts.map((part, index) => {
-      let className = "text-white";
-      if (part === "curl") className = "text-elf-orange";
-      else if (part.startsWith("-")) className = "text-elf-yellow";
-      else if (part.startsWith("'") || part.startsWith('"'))
-        className = "text-elf-light-blue";
-
-      return (
-        <span key={index} className={className}>
-          {part}{" "}
-        </span>
-      );
-    });
   };
 
   const showBodyEditor =
@@ -135,7 +217,7 @@ export default function CurlBuilder({
           </label>
           <div className="h-4 w-px bg-elf-mid-blue/30" />
           <CopyButton
-            textToCopy={() => command}
+            textToCopy={() => generatedCommand}
             className="text-elf-light-blue/60 hover:text-elf-light-blue hover:bg-elf-mid-blue/20"
             title="Copy Command"
             size="sm"
@@ -149,10 +231,46 @@ export default function CurlBuilder({
         </div>
       </div>
 
-      <div className="relative bg-elf-dark-blue rounded-md p-4 font-mono text-white border border-elf-mid-blue/30 mb-6 overflow-x-auto">
-        <pre className="whitespace-pre-wrap break-all">
-          <code>{renderHighlightedCommand(command)}</code>
-        </pre>
+      {/* Editable curl command textarea */}
+      <div className="relative mb-6">
+        <textarea
+          value={editableText}
+          onChange={handleTextChange}
+          onBlur={handleTextBlur}
+          onFocus={handleTextFocus}
+          className={`w-full bg-elf-dark-blue rounded-md p-4 font-mono text-white border transition-colors resize-y min-h-[80px] ${
+            parseError
+              ? "border-orange-500 focus:ring-orange-500"
+              : "border-elf-mid-blue/30 focus:ring-elf-yellow"
+          } focus:outline-none focus:ring-2 focus:border-transparent`}
+          style={{
+            fontFamily:
+              "var(--font-jetbrains-mono), ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace",
+          }}
+          placeholder="curl 'https://example.com'"
+          spellCheck={false}
+          rows={isSingleLine ? 2 : 4}
+        />
+        {parseError && (
+          <div className="mt-2 flex items-center gap-2 text-orange-400 text-sm">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="16"
+              height="16"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <circle cx="12" cy="12" r="10" />
+              <line x1="12" y1="8" x2="12" y2="12" />
+              <line x1="12" y1="16" x2="12.01" y2="16" />
+            </svg>
+            <span>{parseError}</span>
+          </div>
+        )}
       </div>
 
       <div className="flex flex-wrap items-center gap-4 mb-6">

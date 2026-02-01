@@ -1,4 +1,4 @@
-import { render, screen, fireEvent } from "@testing-library/react";
+import { render, screen, fireEvent, act } from "@testing-library/react";
 import CurlBuilder from "../../components/CurlBuilder";
 import { CurlOptions } from "../../types";
 
@@ -14,6 +14,7 @@ describe("CurlBuilder", () => {
 
   beforeEach(() => {
     mockOnCurlChange.mockClear();
+    localStorage.clear();
   });
 
   it("should add verbose flag when Verbose recipe is clicked", () => {
@@ -440,5 +441,187 @@ describe("CurlBuilder", () => {
 
     // Should NOT show the JSON indicator (empty body)
     expect(screen.queryByTitle("Valid JSON")).not.toBeInTheDocument();
+  });
+
+  describe("Textual Editing", () => {
+    beforeEach(() => {
+      jest.useFakeTimers();
+    });
+
+    afterEach(() => {
+      jest.useRealTimers();
+    });
+
+    it("should update state when valid cURL is entered (with debounce)", () => {
+      render(
+        <CurlBuilder
+          url={defaultUrl}
+          curlState={defaultState}
+          onCurlChange={mockOnCurlChange}
+        />,
+      );
+
+      const textarea = screen.getByPlaceholderText(
+        "curl 'https://example.com'",
+      );
+      fireEvent.change(textarea, {
+        target: {
+          value: "curl -X POST 'https://example.com' -d '{\"foo\":\"bar\"}'",
+        },
+      });
+
+      // Should not be called immediately
+      expect(mockOnCurlChange).not.toHaveBeenCalled();
+
+      // Fast-forward 500ms
+      act(() => {
+        jest.advanceTimersByTime(500);
+      });
+
+      expect(mockOnCurlChange).toHaveBeenCalledWith(
+        expect.objectContaining({
+          method: "POST",
+          body: '{"foo":"bar"}',
+        }),
+      );
+    });
+
+    it("should show error message for invalid cURL and not update state", () => {
+      render(
+        <CurlBuilder
+          url={defaultUrl}
+          curlState={defaultState}
+          onCurlChange={mockOnCurlChange}
+        />,
+      );
+
+      const textarea = screen.getByPlaceholderText(
+        "curl 'https://example.com'",
+      );
+      fireEvent.change(textarea, {
+        target: { value: "not a curl command" },
+      });
+
+      act(() => {
+        jest.advanceTimersByTime(500);
+      });
+
+      expect(screen.getByText(/must start with 'curl'/i)).toBeInTheDocument();
+      expect(mockOnCurlChange).not.toHaveBeenCalled();
+    });
+
+    it("should update URL via onUrlChange when URL in command is edited", () => {
+      const mockOnUrlChange = jest.fn();
+      render(
+        <CurlBuilder
+          url={defaultUrl}
+          curlState={defaultState}
+          onCurlChange={mockOnCurlChange}
+          onUrlChange={mockOnUrlChange}
+        />,
+      );
+
+      const textarea = screen.getByPlaceholderText(
+        "curl 'https://example.com'",
+      );
+      fireEvent.change(textarea, {
+        target: { value: "curl 'https://new-url.com'" },
+      });
+
+      act(() => {
+        jest.advanceTimersByTime(500);
+      });
+
+      expect(mockOnUrlChange).toHaveBeenCalledWith("https://new-url.com");
+    });
+
+    it("should update state immediately on blur", () => {
+      render(
+        <CurlBuilder
+          url={defaultUrl}
+          curlState={defaultState}
+          onCurlChange={mockOnCurlChange}
+        />,
+      );
+
+      const textarea = screen.getByPlaceholderText(
+        "curl 'https://example.com'",
+      );
+      fireEvent.change(textarea, {
+        target: { value: "curl -X DELETE 'https://example.com'" },
+      });
+
+      // Blur should trigger immediate update
+      fireEvent.blur(textarea);
+
+      expect(mockOnCurlChange).toHaveBeenCalledWith(
+        expect.objectContaining({
+          method: "DELETE",
+        }),
+      );
+    });
+  });
+
+  describe("Single Line Mode", () => {
+    it("should generate single line output when enabled", () => {
+      const stateWithHeaders: CurlOptions = {
+        ...defaultState,
+        headers: { "X-Test": "Value" },
+      };
+
+      render(
+        <CurlBuilder
+          url={defaultUrl}
+          curlState={stateWithHeaders}
+          onCurlChange={mockOnCurlChange}
+        />,
+      );
+
+      // Check default (multi-line) - should have backslash
+      const textarea = screen.getByPlaceholderText(
+        "curl 'https://example.com'",
+      ) as HTMLTextAreaElement;
+      expect(textarea.value).toContain("\\");
+
+      // Enable single line
+      const checkbox = screen.getByLabelText("Single Line");
+      fireEvent.click(checkbox);
+
+      // Should not contain backslash or newline separating parts
+      expect(textarea.value).not.toContain("\\");
+      expect(textarea.value).not.toContain("\n");
+      expect(textarea.value).toBe(
+        "curl 'https://example.com' -H 'X-Test: Value'",
+      );
+    });
+  });
+
+  it("should clear error message on reset", () => {
+    render(
+      <CurlBuilder
+        url={defaultUrl}
+        curlState={defaultState}
+        onCurlChange={mockOnCurlChange}
+      />,
+    );
+
+    const textarea = screen.getByPlaceholderText("curl 'https://example.com'");
+    fireEvent.change(textarea, {
+      target: { value: "invalid" },
+    });
+    // Blur to trigger immediate parse error
+    fireEvent.blur(textarea);
+
+    expect(
+      screen.getByText("Command must start with 'curl'"),
+    ).toBeInTheDocument();
+
+    const resetBtn = screen.getByText("Reset");
+    fireEvent.click(resetBtn);
+
+    expect(
+      screen.queryByText("Command must start with 'curl'"),
+    ).not.toBeInTheDocument();
+    expect(mockOnCurlChange).toHaveBeenCalledWith(defaultState);
   });
 });

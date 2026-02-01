@@ -11,3 +11,10 @@ export interface AppState {
 }
 
 export type CurlRecipe = (state: AppState) => AppState;
+
+export interface ParsedCurlResult {
+  url: string | null;
+  curlOptions: CurlOptions;
+  isValid: boolean;
+  error?: string;
+}
