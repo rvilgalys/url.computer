@@ -1,5 +1,5 @@
 import { renderHook, act, waitFor } from "@testing-library/react";
-import { useUrlState } from "../../hooks/useUrlState";
+import { useUrlState, parsePathAsUrl } from "../../hooks/useUrlState";
 import { AppState } from "../../types";
 import lz from "lz-string";
 
@@ -155,7 +155,7 @@ describe("useUrlState", () => {
     window.history.replaceState(
       null,
       "",
-      "/http://ignored-path.com#" + compressedState
+      "/http://ignored-path.com#" + compressedState,
     );
 
     const { result } = renderHook(() => useUrlState());
@@ -189,6 +189,165 @@ describe("useUrlState", () => {
       expect(window.location.pathname).toEqual("/");
       // Hash should be present
       expect(window.location.hash).toBeTruthy();
+    });
+  });
+
+  // New tests for simple URL support (without protocol)
+  it("should initialize from simple domain URL (example.com)", async () => {
+    window.history.replaceState(null, "", "/example.com");
+
+    const { result } = renderHook(() => useUrlState());
+
+    await waitFor(() => {
+      expect(result.current[0].url).toEqual("https://example.com");
+    });
+  });
+
+  it("should initialize from simple domain URL with path (example.com/foo/bar)", async () => {
+    window.history.replaceState(null, "", "/example.com/foo/bar");
+
+    const { result } = renderHook(() => useUrlState());
+
+    await waitFor(() => {
+      expect(result.current[0].url).toEqual("https://example.com/foo/bar");
+    });
+  });
+
+  it("should initialize from simple domain URL with query params", async () => {
+    window.history.replaceState(null, "", "/example.com/path?foo=bar&baz=qux");
+
+    const { result } = renderHook(() => useUrlState());
+
+    await waitFor(() => {
+      expect(result.current[0].url).toEqual(
+        "https://example.com/path?foo=bar&baz=qux",
+      );
+    });
+  });
+
+  it("should initialize from simple subdomain URL (api.github.com)", async () => {
+    window.history.replaceState(null, "", "/api.github.com/user/repos");
+
+    const { result } = renderHook(() => useUrlState());
+
+    await waitFor(() => {
+      expect(result.current[0].url).toEqual(
+        "https://api.github.com/user/repos",
+      );
+    });
+  });
+
+  it("should work with clean mode for simple URLs", async () => {
+    window.history.replaceState(
+      null,
+      "",
+      "/clean/example.com/path?tracking=123&utm_source=test",
+    );
+
+    const { result } = renderHook(() => useUrlState());
+
+    await waitFor(() => {
+      // Should strip query params
+      expect(result.current[0].url).toEqual("https://example.com/path");
+    });
+  });
+
+  it("should NOT match invalid paths without dots", async () => {
+    window.history.replaceState(null, "", "/random-text-without-dot");
+
+    const { result } = renderHook(() => useUrlState());
+
+    // Should fall back to default state
+    await waitFor(() => {
+      expect(result.current[0].url).toEqual(defaultState.url);
+    });
+  });
+
+  it("should handle country code TLDs (example.co.uk)", async () => {
+    window.history.replaceState(null, "", "/example.co.uk/page");
+
+    const { result } = renderHook(() => useUrlState());
+
+    await waitFor(() => {
+      expect(result.current[0].url).toEqual("https://example.co.uk/page");
+    });
+  });
+});
+
+// Unit tests for the parsePathAsUrl helper function
+describe("parsePathAsUrl", () => {
+  it("should return null for empty paths", () => {
+    expect(parsePathAsUrl("/", "")).toBeNull();
+    expect(parsePathAsUrl("", "")).toBeNull();
+  });
+
+  it("should parse full URL with http protocol", () => {
+    const result = parsePathAsUrl("/http://example.com/path", "?q=1");
+    expect(result).toEqual({
+      url: "http://example.com/path?q=1",
+      isCleanMode: false,
+    });
+  });
+
+  it("should parse full URL with https protocol", () => {
+    const result = parsePathAsUrl("/https://example.com", "");
+    expect(result).toEqual({
+      url: "https://example.com",
+      isCleanMode: false,
+    });
+  });
+
+  it("should normalize single slash in protocol", () => {
+    const result = parsePathAsUrl("/http:/example.com", "");
+    expect(result).toEqual({
+      url: "http://example.com",
+      isCleanMode: false,
+    });
+  });
+
+  it("should parse simple domain URL", () => {
+    const result = parsePathAsUrl("/example.com", "");
+    expect(result).toEqual({
+      url: "https://example.com",
+      isCleanMode: false,
+    });
+  });
+
+  it("should parse simple domain URL with path and query", () => {
+    const result = parsePathAsUrl("/api.github.com/users", "?page=1");
+    expect(result).toEqual({
+      url: "https://api.github.com/users?page=1",
+      isCleanMode: false,
+    });
+  });
+
+  it("should detect clean mode prefix", () => {
+    const result = parsePathAsUrl("/clean/example.com/path", "?utm=123");
+    expect(result).toEqual({
+      url: "https://example.com/path",
+      isCleanMode: true,
+    });
+  });
+
+  it("should detect clean mode for full URLs", () => {
+    const result = parsePathAsUrl("/clean/http://example.com", "?track=1");
+    expect(result).toEqual({
+      url: "http://example.com/",
+      isCleanMode: true,
+    });
+  });
+
+  it("should return null for non-URL paths", () => {
+    expect(parsePathAsUrl("/just-some-text", "")).toBeNull();
+    expect(parsePathAsUrl("/about", "")).toBeNull();
+    expect(parsePathAsUrl("/foo/bar/baz", "")).toBeNull();
+  });
+
+  it("should handle encoded characters in path", () => {
+    const result = parsePathAsUrl("/example.com/path%20with%20spaces", "");
+    expect(result).toEqual({
+      url: "https://example.com/path with spaces",
+      isCleanMode: false,
     });
   });
 });

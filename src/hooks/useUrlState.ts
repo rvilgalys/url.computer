@@ -26,6 +26,94 @@ const parseHash = (hash: string): AppState | null => {
   return null;
 };
 
+/**
+ * Attempts to parse a URL from the pathname.
+ * Supports:
+ * - Full URLs with protocol: /http://example.com or /https://example.com
+ * - Simple domain URLs: /example.com or /api.github.com/user/repo
+ * - Clean mode prefix: /clean/... strips query params from the result
+ *
+ * @returns The parsed URL string and clean mode flag, or null if not a valid URL pattern
+ */
+export const parsePathAsUrl = (
+  pathname: string,
+  search: string,
+): { url: string; isCleanMode: boolean } | null => {
+  let path = pathname;
+  let isCleanMode = false;
+
+  // Check for clean mode prefix
+  if (path.startsWith("/clean/") || path === "/clean") {
+    isCleanMode = true;
+    path = path.replace(/^\/clean\/?/, "/");
+  }
+
+  // Remove leading slash
+  let rawPath = path.startsWith("/") ? path.slice(1) : path;
+
+  // Decode pathname to handle encoded slashes/colons
+  try {
+    rawPath = decodeURIComponent(rawPath);
+  } catch {
+    // ignore decoding errors
+  }
+
+  // Empty path - nothing to import
+  if (!rawPath) {
+    return null;
+  }
+
+  // Check for full URL with protocol (http:// or https://)
+  // Allow 1 or 2 slashes to handle potential browser normalization
+  const protocolMatch = rawPath.match(/^(https?:\/{1,2})/i);
+  if (protocolMatch) {
+    // Normalize to double slash if needed
+    if (protocolMatch[1].endsWith(":/")) {
+      rawPath = rawPath.replace(
+        /^https?:\//i,
+        protocolMatch[0].replace(":/", "://"),
+      );
+    }
+
+    let importedUrl = rawPath + search;
+
+    if (isCleanMode) {
+      try {
+        const tempUrl = new URL(importedUrl);
+        tempUrl.search = "";
+        importedUrl = tempUrl.toString();
+      } catch {
+        console.error("[useUrlState] Failed to clean URL");
+      }
+    }
+
+    return { url: importedUrl, isCleanMode };
+  }
+
+  // Check for simple domain URL (no protocol)
+  // Pattern: starts with alphanumeric, contains at least one dot, followed by valid TLD
+  // Examples: example.com, api.github.com, foo.bar.co.uk
+  const domainPattern = /^[a-zA-Z0-9][\w.-]*\.[a-zA-Z]{2,}/;
+  if (domainPattern.test(rawPath)) {
+    // Prepend https:// as default protocol
+    let importedUrl = "https://" + rawPath + search;
+
+    if (isCleanMode) {
+      try {
+        const tempUrl = new URL(importedUrl);
+        tempUrl.search = "";
+        importedUrl = tempUrl.toString();
+      } catch {
+        console.error("[useUrlState] Failed to clean simple URL");
+      }
+    }
+
+    return { url: importedUrl, isCleanMode };
+  }
+
+  return null;
+};
+
 export const useUrlState = () => {
   const [state, setState] = useState<AppState>(defaultState);
   const [isInitialized, setIsInitialized] = useState(false);
@@ -43,54 +131,14 @@ export const useUrlState = () => {
       }
 
       // If no hash, check for raw URL in path
-      let pathname = window.location.pathname;
+      const pathname = window.location.pathname;
       const search = window.location.search;
-      let isCleanMode = false;
+      const result = parsePathAsUrl(pathname, search);
 
-      // Check for clean mode
-      if (pathname.startsWith("/clean/") || pathname === "/clean") {
-        isCleanMode = true;
-        pathname = pathname.replace(/^\/clean\/?/, "/");
-      }
-
-      // Remove leading slash to get potential URL
-      // Decode pathname to handle encoded slashes/colons if any
-      let rawPath = pathname.startsWith("/") ? pathname.slice(1) : pathname;
-      try {
-        rawPath = decodeURIComponent(rawPath);
-      } catch (e) {
-        // ignore decoding errors
-      }
-
-      // Check if it looks like a http/https URL
-      // We allow 1 or 2 slashes to handle potential browser normalization
-      const match = rawPath.match(/^(https?:\/{1,2})/i);
-      if (match) {
-        // Normalize to double slash if needed for standard URL parsing
-        if (match[1].endsWith(":/")) {
-          // http:/ case
-          rawPath = rawPath.replace(
-            /^https?:\//i,
-            match[0].replace(":/", "://")
-          );
-        }
-
-        let importedUrl = rawPath + search;
-
-        if (isCleanMode) {
-          try {
-            const tempUrl = new URL(importedUrl);
-            tempUrl.search = "";
-            importedUrl = tempUrl.toString();
-          } catch (e) {
-            // If invalid, leave as is or maybe don't clean
-            console.error("[useUrlState] Failed to clean URL", e);
-          }
-        }
-
+      if (result) {
         setState({
           ...defaultState,
-          url: importedUrl,
+          url: result.url,
         });
       }
 
