@@ -24,7 +24,7 @@ export default function CurlBuilder({
   // Default to multi-line (singleLine = false)
   const [isSingleLine, setIsSingleLine] = useLocalStorage<boolean>(
     "curl-single-line",
-    false
+    false,
   );
 
   useEffect(() => {
@@ -206,9 +206,40 @@ export default function CurlBuilder({
       {showBodyEditor ? (
         <div className="mt-6">
           <div className="flex items-center justify-between mb-2">
-            <h3 className="text-xs text-elf-light-blue uppercase tracking-wide">
-              Request Body
-            </h3>
+            <div className="flex items-center gap-2">
+              <h3 className="text-xs text-elf-light-blue uppercase tracking-wide">
+                Request Body
+              </h3>
+              {curlState.body.trim() &&
+                (() => {
+                  try {
+                    JSON.parse(curlState.body);
+                    return (
+                      <span
+                        className="flex items-center gap-1 text-green-400 text-xs"
+                        title="Valid JSON"
+                      >
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          width="14"
+                          height="14"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="2.5"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        >
+                          <polyline points="20 6 9 17 4 12"></polyline>
+                        </svg>
+                        JSON
+                      </span>
+                    );
+                  } catch {
+                    return null;
+                  }
+                })()}
+            </div>
             <button
               onClick={handleRemoveBody}
               className="p-1.5 rounded-md text-elf-light-blue/60 hover:bg-elf-orange/20 hover:text-elf-orange transition-colors"
@@ -234,7 +265,11 @@ export default function CurlBuilder({
           <textarea
             value={curlState.body}
             onChange={handleBodyChange}
-            className="w-full h-32 bg-elf-dark-blue rounded-md p-4 font-mono text-white border border-elf-mid-blue/30 focus:outline-none focus:ring-2 focus:ring-elf-yellow focus:border-transparent text-sm md:text-base resize-y"
+            className="w-full h-32 bg-elf-dark-blue rounded-md p-4 text-white border border-elf-mid-blue/30 focus:outline-none focus:ring-2 focus:ring-elf-yellow focus:border-transparent text-sm md:text-base resize-y"
+            style={{
+              fontFamily:
+                "var(--font-jetbrains-mono), ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace",
+            }}
             placeholder='{ "key": "value" }'
             spellCheck={false}
           />

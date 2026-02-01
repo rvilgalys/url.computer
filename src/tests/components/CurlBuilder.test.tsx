@@ -22,7 +22,7 @@ describe("CurlBuilder", () => {
         url={defaultUrl}
         curlState={defaultState}
         onCurlChange={mockOnCurlChange}
-      />
+      />,
     );
 
     const verboseChip = screen.getByText("Verbose (-v)");
@@ -31,7 +31,7 @@ describe("CurlBuilder", () => {
     expect(mockOnCurlChange).toHaveBeenCalledWith(
       expect.objectContaining({
         options: ["-v"],
-      })
+      }),
     );
   });
 
@@ -46,7 +46,7 @@ describe("CurlBuilder", () => {
         url={defaultUrl}
         curlState={activeState}
         onCurlChange={mockOnCurlChange}
-      />
+      />,
     );
 
     const verboseChip = screen.getByText("Verbose (-v)");
@@ -59,7 +59,7 @@ describe("CurlBuilder", () => {
     expect(mockOnCurlChange).toHaveBeenCalledWith(
       expect.objectContaining({
         options: [],
-      })
+      }),
     );
   });
 
@@ -69,7 +69,7 @@ describe("CurlBuilder", () => {
         url={defaultUrl}
         curlState={defaultState}
         onCurlChange={mockOnCurlChange}
-      />
+      />,
     );
 
     const jsonChip = screen.getByText("JSON Body");
@@ -82,7 +82,7 @@ describe("CurlBuilder", () => {
           "Content-Type": "application/json",
         }),
         body: expect.stringContaining('"key": "value"'),
-      })
+      }),
     );
   });
 
@@ -99,7 +99,7 @@ describe("CurlBuilder", () => {
         url={defaultUrl}
         curlState={activeState}
         onCurlChange={mockOnCurlChange}
-      />
+      />,
     );
 
     const jsonChip = screen.getByText("JSON Body");
@@ -117,7 +117,7 @@ describe("CurlBuilder", () => {
         url={defaultUrl}
         curlState={defaultState}
         onCurlChange={mockOnCurlChange}
-      />
+      />,
     );
 
     const uaChip = screen.getByText("User Agent");
@@ -128,7 +128,7 @@ describe("CurlBuilder", () => {
         options: expect.arrayContaining([
           expect.stringContaining("-A 'cURL (url.computer)'"),
         ]),
-      })
+      }),
     );
   });
 
@@ -138,7 +138,7 @@ describe("CurlBuilder", () => {
         url={defaultUrl}
         curlState={defaultState}
         onCurlChange={mockOnCurlChange}
-      />
+      />,
     );
 
     const multipartChip = screen.getByText("Multipart Form");
@@ -151,7 +151,7 @@ describe("CurlBuilder", () => {
           "Content-Type": "multipart/form-data; boundary=---boundary",
         }),
         body: expect.stringContaining("-----boundary"),
-      })
+      }),
     );
   });
 
@@ -161,7 +161,7 @@ describe("CurlBuilder", () => {
         url={defaultUrl}
         curlState={defaultState}
         onCurlChange={mockOnCurlChange}
-      />
+      />,
     );
 
     const chip = screen.getByText("SSH Key");
@@ -172,7 +172,7 @@ describe("CurlBuilder", () => {
         options: expect.arrayContaining([
           expect.stringContaining("--key 'private_key.pem'"),
         ]),
-      })
+      }),
     );
   });
 
@@ -182,7 +182,7 @@ describe("CurlBuilder", () => {
         url={defaultUrl}
         curlState={defaultState}
         onCurlChange={mockOnCurlChange}
-      />
+      />,
     );
 
     const chip = screen.getByText("Output to File (-O)");
@@ -191,7 +191,7 @@ describe("CurlBuilder", () => {
     expect(mockOnCurlChange).toHaveBeenCalledWith(
       expect.objectContaining({
         options: expect.arrayContaining(["-O"]),
-      })
+      }),
     );
   });
 
@@ -201,7 +201,7 @@ describe("CurlBuilder", () => {
         url={defaultUrl}
         curlState={defaultState}
         onCurlChange={mockOnCurlChange}
-      />
+      />,
     );
 
     const chip = screen.getByText("Basic Auth");
@@ -210,7 +210,7 @@ describe("CurlBuilder", () => {
     expect(mockOnCurlChange).toHaveBeenCalledWith(
       expect.objectContaining({
         options: expect.arrayContaining(["-u 'username:password'"]),
-      })
+      }),
     );
   });
 
@@ -220,7 +220,7 @@ describe("CurlBuilder", () => {
         url={defaultUrl}
         curlState={defaultState}
         onCurlChange={mockOnCurlChange}
-      />
+      />,
     );
 
     const chip = screen.getByText("Proxy");
@@ -229,7 +229,7 @@ describe("CurlBuilder", () => {
     expect(mockOnCurlChange).toHaveBeenCalledWith(
       expect.objectContaining({
         options: expect.arrayContaining(["-x 'proxy:123'"]),
-      })
+      }),
     );
   });
 
@@ -239,7 +239,7 @@ describe("CurlBuilder", () => {
         url={defaultUrl}
         curlState={defaultState}
         onCurlChange={mockOnCurlChange}
-      />
+      />,
     );
 
     const chip = screen.getByText("Cookies");
@@ -248,7 +248,7 @@ describe("CurlBuilder", () => {
     expect(mockOnCurlChange).toHaveBeenCalledWith(
       expect.objectContaining({
         options: expect.arrayContaining(["-b 'name=value'"]),
-      })
+      }),
     );
   });
 
@@ -259,7 +259,7 @@ describe("CurlBuilder", () => {
         url={defaultUrl}
         curlState={defaultState}
         onCurlChange={mockOnCurlChange}
-      />
+      />,
     );
 
     // Initial check - body input shouldn't be visible (depending on implementation details,
@@ -276,7 +276,7 @@ describe("CurlBuilder", () => {
     expect(mockOnCurlChange).toHaveBeenCalledWith(
       expect.objectContaining({
         body: "test body",
-      })
+      }),
     );
   });
 
@@ -292,7 +292,7 @@ describe("CurlBuilder", () => {
         url={defaultUrl}
         curlState={activeState}
         onCurlChange={mockOnCurlChange}
-      />
+      />,
     );
 
     const removeBodyBtn = screen.getByTitle("Remove Body");
@@ -301,7 +301,7 @@ describe("CurlBuilder", () => {
     expect(mockOnCurlChange).toHaveBeenCalledWith(
       expect.objectContaining({
         body: "",
-      })
+      }),
     );
   });
 
@@ -312,7 +312,7 @@ describe("CurlBuilder", () => {
         url={defaultUrl}
         curlState={defaultState}
         onCurlChange={mockOnCurlChange}
-      />
+      />,
     );
 
     const tokenChip = screen.getByText("Bearer Token");
@@ -323,7 +323,7 @@ describe("CurlBuilder", () => {
         headers: expect.objectContaining({
           Authorization: "Bearer YOUR_TOKEN",
         }),
-      })
+      }),
     );
 
     // Test removing
@@ -339,7 +339,7 @@ describe("CurlBuilder", () => {
         url={defaultUrl}
         curlState={activeState}
         onCurlChange={mockOnCurlChange}
-      />
+      />,
     );
 
     const activeTokenChip = screen.getByText("Bearer Token");
@@ -355,7 +355,7 @@ describe("CurlBuilder", () => {
         url={defaultUrl}
         curlState={defaultState}
         onCurlChange={mockOnCurlChange}
-      />
+      />,
     );
 
     // Default is multi-line (checkbox unchecked)
@@ -382,5 +382,63 @@ describe("CurlBuilder", () => {
 
     // We can explicitly test generateCurlCommand in a unit test file,
     // but here we verify the UI interaction works.
+  });
+
+  it("should show valid JSON indicator when body contains valid JSON", () => {
+    const stateWithValidJson: CurlOptions = {
+      ...defaultState,
+      method: "POST",
+      body: '{"key": "value", "number": 123}',
+    };
+
+    render(
+      <CurlBuilder
+        url={defaultUrl}
+        curlState={stateWithValidJson}
+        onCurlChange={mockOnCurlChange}
+      />,
+    );
+
+    // Should show the JSON indicator
+    expect(screen.getByTitle("Valid JSON")).toBeInTheDocument();
+    expect(screen.getByText("JSON")).toBeInTheDocument();
+  });
+
+  it("should not show valid JSON indicator when body contains invalid JSON", () => {
+    const stateWithInvalidJson: CurlOptions = {
+      ...defaultState,
+      method: "POST",
+      body: '{"key": "value", invalid}',
+    };
+
+    render(
+      <CurlBuilder
+        url={defaultUrl}
+        curlState={stateWithInvalidJson}
+        onCurlChange={mockOnCurlChange}
+      />,
+    );
+
+    // Should NOT show the JSON indicator
+    expect(screen.queryByTitle("Valid JSON")).not.toBeInTheDocument();
+  });
+
+  it("should not show valid JSON indicator when body is empty", () => {
+    const stateWithEmptyBody: CurlOptions = {
+      ...defaultState,
+      method: "POST",
+      body: "",
+    };
+
+    render(
+      <CurlBuilder
+        url={defaultUrl}
+        curlState={stateWithEmptyBody}
+        onCurlChange={mockOnCurlChange}
+      />,
+    );
+
+    // Should NOT show the JSON indicator (empty body)
+    expect(screen.queryByTitle("Valid JSON")).not.toBeInTheDocument();
   });
 });
