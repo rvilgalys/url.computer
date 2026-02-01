@@ -1,13 +1,18 @@
-'use client';
+"use client";
 
-import { useState, useEffect } from 'react';
-import { parseUrl, isValidUrl, updateUrlComponent, updateUrlComponentSafe } from '../lib/url';
-import ProtocolEditor from './ProtocolEditor';
-import HostnameEditor from './HostnameEditor';
-import PathEditor from './PathEditor';
-import FragmentEditor from './FragmentEditor';
-import QueryParamEditor from './QueryParamEditor';
-import CopyButton from './CopyButton';
+import { useState, useEffect } from "react";
+import {
+  parseUrl,
+  isValidUrl,
+  updateUrlComponent,
+  updateUrlComponentSafe,
+} from "../lib/url";
+import ProtocolEditor from "./ProtocolEditor";
+import HostnameEditor from "./HostnameEditor";
+import PathEditor from "./PathEditor";
+import FragmentEditor from "./FragmentEditor";
+import QueryParamEditor from "./QueryParamEditor";
+import CopyButton from "./CopyButton";
 
 interface URLAnalyzerProps {
   url: string;
@@ -29,7 +34,7 @@ export default function URLAnalyzer({ url, onUrlChange }: URLAnalyzerProps) {
     setUrlInput(newUrl);
     const valid = isValidUrl(newUrl);
     setIsValid(valid);
-    
+
     // Update parent immediately for valid URLs
     if (valid) {
       onUrlChange(newUrl);
@@ -40,7 +45,7 @@ export default function URLAnalyzer({ url, onUrlChange }: URLAnalyzerProps) {
 
   // Handle protocol changes
   const handleProtocolChange = (newProtocol: string) => {
-    const result = updateUrlComponentSafe(url, 'protocol', newProtocol);
+    const result = updateUrlComponentSafe(url, "protocol", newProtocol);
     if (result.success && result.url !== url) {
       onUrlChange(result.url);
     }
@@ -48,7 +53,7 @@ export default function URLAnalyzer({ url, onUrlChange }: URLAnalyzerProps) {
 
   // Handle hostname changes
   const handleHostnameChange = (newHostname: string) => {
-    const result = updateUrlComponentSafe(url, 'hostname', newHostname);
+    const result = updateUrlComponentSafe(url, "hostname", newHostname);
     if (result.success && result.url !== url) {
       onUrlChange(result.url);
     }
@@ -56,7 +61,7 @@ export default function URLAnalyzer({ url, onUrlChange }: URLAnalyzerProps) {
 
   // Handle pathname changes
   const handlePathnameChange = (newPathname: string) => {
-    const result = updateUrlComponentSafe(url, 'pathname', newPathname);
+    const result = updateUrlComponentSafe(url, "pathname", newPathname);
     if (result.success && result.url !== url) {
       onUrlChange(result.url);
     }
@@ -64,7 +69,7 @@ export default function URLAnalyzer({ url, onUrlChange }: URLAnalyzerProps) {
 
   // Handle query parameter changes
   const handleSearchParamsChange = (newSearchParams: URLSearchParams) => {
-    const updatedUrl = updateUrlComponent(url, 'searchParams', newSearchParams);
+    const updatedUrl = updateUrlComponent(url, "searchParams", newSearchParams);
     if (updatedUrl && updatedUrl !== url) {
       onUrlChange(updatedUrl);
     }
@@ -81,36 +86,51 @@ export default function URLAnalyzer({ url, onUrlChange }: URLAnalyzerProps) {
       >
         URL Input
       </label>
-      
+
       <div className="relative">
         <div className="flex gap-2">
-          <input
-            type="text"
+          <textarea
             id="url-input"
             value={urlInput}
             onChange={(e) => handleUrlInputChange(e.target.value)}
+            rows={1}
             className={`
-              font-mono flex-1 p-3 rounded-md text-lg border
-              ${isValid 
-                ? 'border-elf-mid-blue/30 bg-elf-dark-blue text-elf-light-blue focus:outline-none focus:ring-2 focus:ring-elf-yellow focus:border-transparent' 
-                : 'border-elf-orange/50 bg-elf-orange/10 text-elf-orange focus:outline-none focus:ring-2 focus:ring-elf-orange focus:border-transparent'
+              font-mono flex-1 p-3 rounded-md text-base border resize-none overflow-hidden
+              ${
+                isValid
+                  ? "border-elf-mid-blue/30 bg-elf-dark-blue text-elf-light-blue focus:outline-none focus:ring-2 focus:ring-elf-yellow focus:border-transparent"
+                  : "border-elf-orange/50 bg-elf-orange/10 text-elf-orange focus:outline-none focus:ring-2 focus:ring-elf-orange focus:border-transparent"
               }
             `}
+            style={
+              {
+                fontFamily:
+                  "var(--font-jetbrains-mono), ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace",
+                minHeight: "48px",
+                maxHeight: "200px",
+                height: "auto",
+                fieldSizing: "content",
+              } as React.CSSProperties
+            }
             placeholder="https://api.example.com/v1/users?token=..."
           />
           {isValid && urlInput && (
-            <CopyButton 
-              textToCopy={urlInput} 
-              size="sm" 
+            <CopyButton
+              textToCopy={urlInput}
+              size="sm"
               title="Copy URL"
-              className="px-3 text-elf-light-blue/60 hover:text-elf-light-blue hover:bg-elf-mid-blue/20 border border-elf-mid-blue/30 rounded-md"
+              className="px-3 text-elf-light-blue/60 hover:text-elf-light-blue hover:bg-elf-mid-blue/20 border border-elf-mid-blue/30 rounded-md self-start"
             />
           )}
         </div>
         {!isValid && urlInput && (
           <div className="absolute top-full left-0 mt-1 text-sm text-elf-orange flex items-center gap-1">
             <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-              <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+              <path
+                fillRule="evenodd"
+                d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z"
+                clipRule="evenodd"
+              />
             </svg>
             Invalid URL format
           </div>
@@ -136,12 +156,9 @@ export default function URLAnalyzer({ url, onUrlChange }: URLAnalyzerProps) {
               onPathnameChange={handlePathnameChange}
               isEditable={true}
             />
-            <FragmentEditor
-              hash={parsedUrl.hash}
-              isEditable={false}
-            />
+            <FragmentEditor hash={parsedUrl.hash} isEditable={false} />
           </div>
-          
+
           <QueryParamEditor
             searchParams={parsedUrl.searchParams}
             onSearchParamsChange={handleSearchParamsChange}
