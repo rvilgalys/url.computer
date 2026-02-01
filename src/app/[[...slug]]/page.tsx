@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect } from "react";
 import { useUrlState } from "../../hooks/useUrlState";
 import URLAnalyzer from "../../components/URLAnalyzer";
 import CurlBuilder from "../../components/CurlBuilder";
@@ -8,6 +9,24 @@ import { CurlOptions } from "../../types";
 
 export default function Home() {
   const [state, setState] = useUrlState();
+
+  // Update document title based on current URL and cURL method
+  useEffect(() => {
+    let hostname = "";
+    try {
+      const parsedUrl = new URL(state.url);
+      hostname = parsedUrl.hostname;
+    } catch {
+      // Invalid URL, use a fallback
+      hostname = state.url.split("/")[0] || "";
+    }
+
+    if (hostname) {
+      document.title = `url.computer ✦ ${hostname} ✦ ${state.curl.method}`;
+    } else {
+      document.title = "url.computer";
+    }
+  }, [state.url, state.curl.method]);
 
   const handleUrlChange = (newUrl: string) => {
     setState((prev) => ({
