@@ -12,9 +12,19 @@ describe("useLocalStorage", () => {
     expect(result.current[0]).toBe("initial");
   });
 
-  it("should return value from localStorage if exists", () => {
+  it("should return value from localStorage if exists", async () => {
     window.localStorage.setItem("test-key", JSON.stringify("stored"));
     const { result } = renderHook(() => useLocalStorage("test-key", "initial"));
+
+    // Initially it should be the initial value
+    expect(result.current[0]).toBe("initial");
+
+    // Wait for the useEffect to sync from localStorage
+    await act(async () => {
+      // Small delay or just waiting for the next tick
+      await new Promise((resolve) => setTimeout(resolve, 0));
+    });
+
     expect(result.current[0]).toBe("stored");
   });
 
@@ -27,7 +37,7 @@ describe("useLocalStorage", () => {
 
     expect(result.current[0]).toBe("new-value");
     expect(window.localStorage.getItem("test-key")).toBe(
-      JSON.stringify("new-value")
+      JSON.stringify("new-value"),
     );
   });
 

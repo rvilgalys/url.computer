@@ -9,23 +9,27 @@ import { useState, useEffect } from "react";
  */
 export function useLocalStorage<T>(
   key: string,
-  initialValue: T
+  initialValue: T,
 ): [T, (value: T | ((val: T) => T)) => void] {
   // State to store our value
   // Pass initial state function to useState so logic is only executed once
-  const [storedValue, setStoredValue] = useState<T>(() => {
-    if (typeof window === "undefined") {
-      return initialValue;
-    }
+  // State to store our value
+  // Initial state is always the initialValue to ensure SSR compatibility
+  const [storedValue, setStoredValue] = useState<T>(initialValue);
 
+  // Once the component has mounted, read from localStorage
+  useEffect(() => {
     try {
-      const item = window.localStorage.getItem(key);
-      return item ? JSON.parse(item) : initialValue;
+      if (typeof window !== "undefined") {
+        const item = window.localStorage.getItem(key);
+        if (item !== null) {
+          setStoredValue(JSON.parse(item));
+        }
+      }
     } catch (error) {
       console.warn(`Error reading localStorage key "${key}":`, error);
-      return initialValue;
     }
-  });
+  }, [key]);
 
   // Return a wrapped version of useState's setter function that ...
   // ... persists the new value to localStorage.
@@ -56,7 +60,7 @@ export function useLocalStorage<T>(
         } catch (error) {
           console.warn(
             `Error parsing localStorage change for key "${key}":`,
-            error
+            error,
           );
         }
       }
