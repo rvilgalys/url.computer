@@ -5,7 +5,6 @@ import { useUrlState } from "../../hooks/useUrlState";
 import { useSavedStates } from "../../hooks/useSavedStates";
 import URLAnalyzer from "../../components/URLAnalyzer";
 import CurlBuilder from "../../components/CurlBuilder";
-import CopyButton from "../../components/CopyButton";
 import SavedStatesSidebar from "../../components/SavedStatesSidebar";
 import { CurlOptions } from "../../types";
 
@@ -14,6 +13,7 @@ export default function Home() {
   const { savedStates, saveState, deleteState, renameState, getState } =
     useSavedStates();
   const [saveFlash, setSaveFlash] = useState(false);
+  const [copyFlash, setCopyFlash] = useState(false);
 
   // Update document title based on current URL and cURL method
   useEffect(() => {
@@ -52,6 +52,17 @@ export default function Home() {
       return window.location.href;
     }
     return "";
+  };
+
+  const handleCopyShareableLink = async () => {
+    try {
+      const link = getShareableLink();
+      await navigator.clipboard.writeText(link);
+      setCopyFlash(true);
+      setTimeout(() => setCopyFlash(false), 2000);
+    } catch (err) {
+      console.error("Failed to copy link:", err);
+    }
   };
 
   const handleSaveToLocalStorage = () => {
@@ -110,12 +121,31 @@ export default function Home() {
 
           <div className="flex flex-col items-end gap-0.5">
             {/* Copy Shareable Link button */}
-            <CopyButton
-              textToCopy={getShareableLink}
-              className="text-elf-light-blue/50 hover:text-elf-light-blue hover:bg-elf-mid-blue/15"
+            <button
+              onClick={handleCopyShareableLink}
+              className={`flex items-center gap-2 px-2 py-1.5 rounded font-mono text-xs transition-colors ${
+                copyFlash
+                  ? "text-green-400"
+                  : "text-elf-light-blue/50 hover:text-elf-light-blue hover:bg-elf-mid-blue/15"
+              }`}
+              title="Copy shareable link to clipboard"
             >
-              <span className="flex items-center gap-2 font-mono text-xs">
-                copy shareable link
+              {copyFlash ? "copied!" : "copy shareable link"}
+              {copyFlash ? (
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="14"
+                  height="14"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <polyline points="20,6 9,17 4,12" />
+                </svg>
+              ) : (
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
                   width="14"
@@ -130,8 +160,8 @@ export default function Home() {
                   <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.72" />
                   <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.72-1.72" />
                 </svg>
-              </span>
-            </CopyButton>
+              )}
+            </button>
 
             {/* Save to localStorage button */}
             <button
