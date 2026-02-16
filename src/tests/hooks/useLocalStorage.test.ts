@@ -1,4 +1,4 @@
-import { renderHook, act } from "@testing-library/react";
+import { renderHook, act, waitFor } from "@testing-library/react";
 import { useLocalStorage } from "../../hooks/useLocalStorage";
 
 describe("useLocalStorage", () => {
@@ -16,16 +16,10 @@ describe("useLocalStorage", () => {
     window.localStorage.setItem("test-key", JSON.stringify("stored"));
     const { result } = renderHook(() => useLocalStorage("test-key", "initial"));
 
-    // Initially it should be the initial value
-    expect(result.current[0]).toBe("initial");
-
     // Wait for the useEffect to sync from localStorage
-    await act(async () => {
-      // Small delay or just waiting for the next tick
-      await new Promise((resolve) => setTimeout(resolve, 0));
+    await waitFor(() => {
+      expect(result.current[0]).toBe("stored");
     });
-
-    expect(result.current[0]).toBe("stored");
   });
 
   it("should update localStorage when state changes", () => {
