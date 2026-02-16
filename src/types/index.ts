@@ -18,3 +18,11 @@ export interface ParsedCurlResult {
   isValid: boolean;
   error?: string;
 }
+
+export interface SavedState {
+  id: string;
+  name: string;
+  url: string;
+  curl: CurlOptions;
+  savedAt: number;
+}
