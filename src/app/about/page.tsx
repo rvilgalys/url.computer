@@ -29,8 +29,9 @@ export default function AboutPage() {
               query builder. The entire app runs locally in the browser.
             </p>
             <p className="text-sm leading-relaxed">
-              It's meant as a lightweight developer tool for quick URL parsing
-              and querying, particularly in local development and debugging.
+              It&apos;s meant as a lightweight developer tool for quick URL
+              parsing and querying, particularly in local development and
+              debugging.
             </p>
             <p className="text-sm leading-relaxed">
               State is saved to the URL hash, allowing you to easily share the
