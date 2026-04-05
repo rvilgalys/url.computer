@@ -1,11 +1,13 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import { useUrlState } from "../../hooks/useUrlState";
 import { useSavedStates } from "../../hooks/useSavedStates";
 import URLAnalyzer from "../../components/URLAnalyzer";
 import CurlBuilder from "../../components/CurlBuilder";
 import SavedStatesSidebar from "../../components/SavedStatesSidebar";
+import Footer from "../../components/Footer";
 import { CurlOptions } from "../../types";
 
 export default function Home() {
@@ -117,6 +119,21 @@ export default function Home() {
             <h1 className="text-3xl font-bold text-elf-light-blue font-mono">
               url.computer
             </h1>
+            <span className="text-elf-light-blue/20 hidden sm:inline">|</span>
+            <nav className="hidden sm:flex items-center gap-3">
+              <Link
+                href="/docs"
+                className="text-elf-light-blue/50 hover:text-elf-light-blue font-mono text-sm transition-colors"
+              >
+                docs
+              </Link>
+              <Link
+                href="/about"
+                className="text-elf-light-blue/50 hover:text-elf-light-blue font-mono text-sm transition-colors"
+              >
+                about
+              </Link>
+            </nav>
           </div>
 
           <div className="flex flex-col items-end gap-0.5">
@@ -219,6 +236,8 @@ export default function Home() {
           />
         </main>
       </div>
+
+      <Footer />
     </>
   );
 }

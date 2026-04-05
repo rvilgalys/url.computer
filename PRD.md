@@ -1,9 +1,9 @@
 # Product Requirements Document: url.computer MVP
 
 **Author:** Gemini
-**Status:** Draft
-**Version:** 1.1
-**Last Updated:** September 1, 2025
+**Status:** MVP Complete
+**Version:** 2.0
+**Last Updated:** April 5, 2026
 
 ## 1. Introduction & Vision
 
@@ -65,6 +65,7 @@ The application state is encoded and stored in the browser's URL, enabling persi
 *   **FR-3.3: Live URL Update:** The compressed state string will be appended to the current URL as a hash (e.g., https://url.computer/#s=[COMPRESSED_STRING]). This should update in near real-time without causing a page refresh.
 *   **FR-3.4: State Hydration:** On page load, the application must check for the state string in the URL. If present, it must decompress, parse, and use the resulting object to populate the entire UI to its previous state.
 *   **FR-3.5: Share Button:** A dedicated "Copy Shareable Link" button must be available to easily copy the full URL with the state hash.
+*   **FR-3.6: localStorage Saved States:** Users can save the current state to localStorage and restore it from a sidebar. Each saved state shows the URL, method, and timestamp, and can be renamed or deleted. *(Originally out of scope, built during MVP.)*
 
 ## 5. User Journeys
 
@@ -95,6 +96,7 @@ The application state is encoded and stored in the browser's URL, enabling persi
 *   **Language:** TypeScript
 *   **Styling:** Tailwind CSS
 *   **State Compression:** LZ-String
+*   **UI Components:** Downshift (typeahead/autocomplete)
 *   **Deployment:** Vercel
 
 ## 7. Non-Functional Requirements
@@ -111,7 +113,7 @@ The following features are valuable but will not be included in the initial MVP 
 *   Smart interpretation of content (e.g., identifying JWTs, Base64 strings).
 *   Domain inspection (WHOIS lookups, DNS info).
 *   Integrated documentation links or "Explainers" for URL components and cURL flags.
-*   User accounts or saved history (persistence is handled solely by the URL).
+*   ~~User accounts or saved history (persistence is handled solely by the URL).~~ *localStorage saved states were added during MVP development.*
 
 ### 8.1. Post-MVP Considerations
 
