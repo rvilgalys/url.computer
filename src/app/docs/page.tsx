@@ -77,6 +77,23 @@ export default function DocsPage() {
               Your URLs, headers, and tokens stay on your machine.
             </p>
           </section>
+
+          <section className="space-y-3">
+            <h2 className="text-lg text-elf-light-blue">Feedback</h2>
+            <p className="text-sm leading-relaxed">
+              Found a bug, have a feature request, or want to contribute? Open an
+              issue on{" "}
+              <a
+                href="https://github.com/rvilgalys/url.computer/issues"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-elf-light-blue underline underline-offset-2 hover:text-white transition-colors"
+              >
+                GitHub
+              </a>
+              .
+            </p>
+          </section>
         </main>
       </div>
 
