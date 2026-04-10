@@ -5,7 +5,7 @@ import lz from "lz-string";
 
 // The default state from the hook implementation
 const defaultState: AppState = {
-  url: "https://api.example.com/v1/users?page=1&pageSize=10",
+  url: "https://httpbin.org/get?foo=bar&page=1",
   curl: {
     method: "GET",
     headers: {},

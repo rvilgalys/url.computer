@@ -1,10 +1,12 @@
 # Launch Checklist
 
-- [ ] Add Google Analytics (gtag or next/third-parties)
-- [ ] Replace default example URL with one that can actually be queried via cURL (e.g., `https://httpbin.org/get?foo=bar`)
-- [ ] Verify meta tags / OpenGraph for social sharing
+- [x] Add Vercel Web Analytics (cookieless, GDPR-safe)
+- [x] OpenGraph + Twitter Card meta tags
+- [x] robots.txt + sitemap.xml (via Next.js app router)
+- [x] Replace default example URL with queryable httpbin.org endpoint
+- [x] Clean up unused template SVGs from public/
+- [ ] Create og:image (1200x630 PNG) — dark background, "url.computer" text + tagline
 - [ ] Test on mobile browsers
 - [ ] Favicon check across browsers
-- [ ] Verify Vercel deployment settings
-- [ ] Check accessibility (keyboard nav, contrast)
+- [ ] Verify Vercel production deployment
 - [ ] Performance audit (Lighthouse)
