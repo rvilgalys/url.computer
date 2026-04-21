@@ -13,7 +13,7 @@ export default function AboutPage() {
         <NavHeader activePage="about" />
 
         <main className="space-y-8 font-mono text-elf-light-blue/80">
-          <h1 className="text-xl font-bold text-elf-yellow">About</h1>
+          <h1 className="text-xl font-bold text-elf-light-blue">About</h1>
           <section className="space-y-3">
             <p className="text-sm leading-relaxed">
               url.computer is a developer tool for parsing, editing, and working
