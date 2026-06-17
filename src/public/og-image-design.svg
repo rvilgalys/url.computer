@@ -1,0 +1,33 @@
+<svg width="1200" height="630" viewBox="0 0 1200 630" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background -->
+  <rect width="1200" height="630" fill="#023047"/>
+  
+  <!-- Subtle grid pattern in background for luxury dev tool feel -->
+  <path d="M 0 70 L 1200 70 M 0 140 L 1200 140 M 0 210 L 1200 210 M 0 280 L 1200 280 M 0 350 L 1200 350 M 0 420 L 1200 420 M 0 490 L 1200 490 M 0 560 L 1200 560" stroke="#8ecae6" stroke-width="1" stroke-opacity="0.05"/>
+  <path d="M 100 0 L 100 630 M 200 0 L 200 630 M 300 0 L 300 630 M 400 0 L 400 630 M 500 0 L 500 630 M 600 0 L 600 630 M 700 0 L 700 630 M 800 0 L 800 630 M 900 0 L 900 630 M 1000 0 L 1000 630 M 1100 0 L 1100 630" stroke="#8ecae6" stroke-width="1" stroke-opacity="0.05"/>
+
+  <!-- Glowing background radial gradient for modern look -->
+  <circle cx="600" cy="315" r="500" fill="#219ebc" fill-opacity="0.15" filter="blur(80px)"/>
+
+  <!-- Content Group -->
+  <g transform="translate(0, 0)">
+    <!-- Terminal Prompt Graphic -->
+    <g transform="translate(540, 140)">
+      <!-- Prompt '>' -->
+      <path d="M 10 20 L 50 60 L 10 100" stroke="#8ecae6" stroke-width="12" stroke-linecap="round" stroke-linejoin="round"/>
+      <!-- Cursor '_' -->
+      <path d="M 70 100 L 140 100" stroke="#ffb703" stroke-width="12" stroke-linecap="round"/>
+    </g>
+    
+    <!-- Title Text -->
+    <text x="600" y="380" text-anchor="middle" fill="#8ecae6" font-family="ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace" font-size="80" font-weight="bold" letter-spacing="-2">url.computer</text>
+    
+    <!-- Subtitle / Tagline -->
+    <text x="600" y="440" text-anchor="middle" fill="#8ecae6" fill-opacity="0.75" font-family="ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace" font-size="24" letter-spacing="1">A client-side URL parser and cURL generator.</text>
+    
+    <!-- URL parameters graphic representation at the bottom -->
+    <text x="600" y="520" text-anchor="middle" fill="#ffb703" fill-opacity="0.6" font-family="ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace" font-size="16">
+      [protocol]://[hostname]/[path]?[query_params]#[fragment]
+    </text>
+  </g>
+</svg>
