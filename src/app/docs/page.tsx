@@ -2,8 +2,15 @@ import Footer from "../../components/Footer";
 import NavHeader from "../../components/NavHeader";
 
 export const metadata = {
-  title: "url.computer — Docs",
-  description: "Documentation for url.computer",
+  title: "Docs",
+  description:
+    "Documentation for url.computer. Learn how to parse URLs, edit query parameters, strip tracking tags (UTM), build cURL commands, and share request configurations.",
+  keywords: [
+    "url computer documentation",
+    "how to parse urls",
+    "online curl builder manual",
+    "clean tracking links",
+  ],
 };
 
 export default function DocsPage() {

@@ -2,8 +2,15 @@ import Footer from "../../components/Footer";
 import NavHeader from "../../components/NavHeader";
 
 export const metadata = {
-  title: "url.computer — About",
-  description: "About url.computer",
+  title: "About",
+  description:
+    "Learn about url.computer, a privacy-first web utility for editing URL components, stripping UTM metrics, and building cURL commands locally in the browser.",
+  keywords: [
+    "about url computer",
+    "rim vilgalys",
+    "privacy first web tool",
+    "open source dev tools",
+  ],
 };
 
 export default function AboutPage() {
