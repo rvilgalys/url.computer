@@ -1,0 +1,18 @@
+<svg width="800" height="240" viewBox="0 0 800 240" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background -->
+  <rect width="800" height="240" rx="12" fill="#023047"/>
+  
+  <!-- Terminal Prompt Graphic -->
+  <g transform="translate(80, 70)">
+    <!-- Prompt '>' -->
+    <path d="M 0 10 L 30 40 L 0 70" stroke="#8ecae6" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"/>
+    <!-- Cursor '_' -->
+    <path d="M 45 70 L 95 70" stroke="#ffb703" stroke-width="8" stroke-linecap="round"/>
+  </g>
+  
+  <!-- App Name Text -->
+  <text x="230" y="120" fill="#8ecae6" font-family="ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace" font-size="52" font-weight="bold" letter-spacing="-1">url.computer</text>
+  
+  <!-- Tagline Text -->
+  <text x="230" y="160" fill="#8ecae6" fill-opacity="0.6" font-family="ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace" font-size="16">A client-side URL parser and cURL generator.</text>
+</svg>
